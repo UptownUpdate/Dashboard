@@ -188,6 +188,10 @@
   .links-card li{padding:10px 0;border-top:1px solid var(--line);font-weight:600}
   .links-card li:first-child{border-top:none}
   .links-card li a{display:flex;justify-content:space-between;align-items:center}
+  .x-card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow);margin-top:16px}
+  .x-card-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px}
+  .x-card-head h3{font-size:1rem;text-transform:uppercase;letter-spacing:1px;color:var(--olive)}
+  .x-follow{font-weight:700;font-size:.85rem;color:var(--blue-dark)}
   .links-card li a:after{content:"→";color:var(--blue)}
 
   /* Subscribe strip */
@@ -217,7 +221,7 @@
       <a href="#episodes">Episodes</a>
       <a href="#dashboard">Recruiting Dashboard</a>
       <a href="#news">News &amp; Links</a>
-      <a href="#subscribe">Subscribe</a>
+      <a href="https://x.com/TUptownUpdate" target="_blank" rel="noopener">Follow</a>
     </nav>
   </div>
 </header>
@@ -317,6 +321,17 @@
             <li><a href="#dashboard">Recruiting Board</a></li>
           </ul>
         </div>
+
+        <div class="x-card">
+          <div class="x-card-head">
+            <h3>On X</h3>
+            <a class="x-follow" href="https://x.com/TUptownUpdate" target="_blank" rel="noopener">@TUptownUpdate</a>
+          </div>
+          <a class="twitter-timeline" data-height="520" data-chrome="noheader nofooter transparent"
+             data-dnt="true" href="https://twitter.com/TUptownUpdate?ref_src=twsrc%5Etfw">
+             Tweets by The Uptown Update</a>
+          <noscript><a href="https://x.com/TUptownUpdate" target="_blank" rel="noopener">See our latest posts on X →</a></noscript>
+        </div>
       </div>
     </div>
   </div>
@@ -334,6 +349,8 @@
     </div>
   </div>
 </section>
+
+<script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
 
 <!-- ARTICLE READER -->
 <div class="reader-ov" id="readerOv">
