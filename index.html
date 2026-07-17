@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Uptown Update — Tulane Football Podcast</title>
+<style>
+  :root{
+    --olive:#006747;        /* Tulane green/olive */
+    --olive-dark:#004d34;
+    --olive-light:#0a7d57;
+    --blue:#418FDE;         /* Tulane blue */
+    --blue-dark:#2d6fb3;
+    --ink:#12241d;
+    --paper:#f6f8f6;
+    --card:#ffffff;
+    --muted:#5c6b64;
+    --line:#e3e8e4;
+    --shadow:0 6px 24px rgba(0,50,30,.08);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    color:var(--ink);background:var(--paper);line-height:1.6;
+  }
+  a{color:var(--blue-dark);text-decoration:none}
+  a:hover{text-decoration:underline}
+  .wrap{max-width:1100px;margin:0 auto;padding:0 20px}
+
+  /* Header / Nav */
+  header{
+    position:sticky;top:0;z-index:50;
+    background:var(--olive);color:#fff;
+    box-shadow:0 2px 12px rgba(0,0,0,.15);
+  }
+  .nav{display:flex;align-items:center;justify-content:space-between;height:64px}
+  .brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:1.15rem;color:#fff;letter-spacing:.3px}
+  .brand .dot{width:12px;height:12px;border-radius:50%;background:var(--blue)}
+  .menu{display:flex;gap:6px;flex-wrap:wrap}
+  .menu a{color:#e9f3ee;font-weight:600;font-size:.92rem;padding:8px 12px;border-radius:8px}
+  .menu a:hover{background:rgba(255,255,255,.12);text-decoration:none}
+
+  /* Hero */
+  .hero{
+    background:linear-gradient(135deg,var(--olive-dark),var(--olive) 55%,var(--olive-light));
+    color:#fff;padding:70px 0 80px;position:relative;overflow:hidden;
+  }
+  .hero:after{
+    content:"";position:absolute;right:-80px;top:-80px;width:320px;height:320px;
+    background:radial-gradient(circle,rgba(65,143,222,.35),transparent 70%);
+  }
+  .hero .tag{display:inline-block;background:var(--blue);color:#fff;font-weight:700;
+    font-size:.75rem;letter-spacing:1.5px;text-transform:uppercase;padding:6px 12px;border-radius:20px;margin-bottom:18px}
+  .hero h1{font-size:3rem;line-height:1.05;font-weight:900;max-width:720px}
+  .hero p{font-size:1.2rem;max-width:600px;margin-top:16px;color:#dcefe6}
+  .hero .cta{margin-top:28px;display:flex;gap:12px;flex-wrap:wrap}
+  .btn{display:inline-block;padding:13px 22px;border-radius:10px;font-weight:700;font-size:.95rem;cursor:pointer;border:none}
+  .btn-primary{background:var(--blue);color:#fff}
+  .btn-primary:hover{background:var(--blue-dark);text-decoration:none}
+  .btn-ghost{background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.4)}
+  .btn-ghost:hover{background:rgba(255,255,255,.22);text-decoration:none}
+
+  /* Sections */
+  section{padding:64px 0}
+  .section-head{margin-bottom:32px}
+  .section-head .kicker{color:var(--blue-dark);font-weight:800;text-transform:uppercase;letter-spacing:1.5px;font-size:.78rem}
+  .section-head h2{font-size:2rem;font-weight:900;margin-top:6px;color:var(--ink)}
+  .section-head p{color:var(--muted);margin-top:8px;max-width:620px}
+
+  /* Episodes */
+  .ep-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:20px}
+  .ep{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow);transition:transform .15s}
+  .ep:hover{transform:translateY(-3px)}
+  .ep .ep-top{background:linear-gradient(135deg,var(--olive),var(--olive-light));padding:18px 20px;color:#fff}
+  .ep .ep-num{font-size:.75rem;font-weight:700;letter-spacing:1px;opacity:.85;text-transform:uppercase}
+  .ep .ep-title{font-size:1.15rem;font-weight:800;margin-top:4px}
+  .ep .ep-body{padding:18px 20px}
+  .ep .ep-meta{font-size:.82rem;color:var(--muted);margin-bottom:10px}
+  .ep .ep-desc{font-size:.92rem;color:#33423b}
+  .ep .ep-play{margin-top:16px;display:inline-flex;align-items:center;gap:8px;color:var(--blue-dark);font-weight:700;font-size:.9rem}
+  .ep .ep-play svg{width:18px;height:18px}
+
+  /* Platform toggle */
+  .toggle-wrap{display:flex;flex-direction:column;align-items:center;gap:14px;margin-bottom:34px}
+  .toggle{display:inline-flex;background:#e7efe9;border:1px solid var(--line);border-radius:14px;padding:5px;gap:4px}
+  .toggle button{
+    border:none;background:transparent;cursor:pointer;font-weight:700;font-size:.92rem;
+    padding:10px 22px;border-radius:10px;color:var(--olive-dark);display:flex;align-items:center;gap:8px;transition:all .15s}
+  .toggle button:hover{background:rgba(0,103,71,.08)}
+  .toggle button.active{color:#fff}
+  .toggle button.active[data-plat="spotify"]{background:#1DB954}
+  .toggle button.active[data-plat="apple"]{background:#a643d6;background:linear-gradient(135deg,#e94d8b,#a544d4)}
+  .toggle button.active[data-plat="soundcloud"]{background:#ff5500}
+  .toggle button svg{width:18px;height:18px}
+  .platform-hint{font-size:.9rem;color:var(--muted)}
+  .platform-hint a{font-weight:700}
+
+  /* Episode buttons */
+  .ep-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:14px}
+  a.ep-btn{
+    display:flex;align-items:center;gap:14px;background:var(--card);border:1px solid var(--line);
+    border-radius:12px;padding:14px 16px;box-shadow:var(--shadow);text-decoration:none;color:var(--ink);transition:transform .12s,border-color .12s}
+  a.ep-btn:hover{transform:translateY(-2px);border-color:var(--olive-light);text-decoration:none}
+  .ep-btn .play-ic{flex:none;width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;color:#fff;background:var(--olive)}
+  .ep-btn.spotify .play-ic{background:#1DB954}
+  .ep-btn.apple .play-ic{background:linear-gradient(135deg,#e94d8b,#a544d4)}
+  .ep-btn.soundcloud .play-ic{background:#ff5500}
+  .ep-btn .play-ic svg{width:20px;height:20px}
+  .ep-btn .ep-info{min-width:0}
+  .ep-btn .ep-t{font-weight:800;font-size:.95rem;line-height:1.25;margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+  .ep-btn .ep-m{font-size:.78rem;color:var(--muted)}
+  .ep-more{text-align:center;margin-top:24px}
+
+  /* Dashboard */
+  #dashboard{background:linear-gradient(180deg,#eef3ef,#f6f8f6)}
+  .dash-controls{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:24px}
+  .dash-controls input,.dash-controls select{
+    padding:10px 14px;border:1px solid var(--line);border-radius:10px;font-size:.9rem;background:#fff;color:var(--ink)}
+  .dash-controls input{flex:1;min-width:200px}
+  .stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:16px;margin-bottom:28px}
+  .stat{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px;box-shadow:var(--shadow)}
+  .stat .num{font-size:2.2rem;font-weight:900;color:var(--olive)}
+  .stat .lbl{font-size:.8rem;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin-top:4px}
+  .stat.blue .num{color:var(--blue-dark)}
+  .table-card{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+  table{width:100%;border-collapse:collapse;font-size:.9rem}
+  thead th{background:var(--olive);color:#fff;text-align:left;padding:12px 14px;font-size:.78rem;text-transform:uppercase;letter-spacing:.5px;cursor:pointer;user-select:none;white-space:nowrap}
+  thead th:hover{background:var(--olive-light)}
+  tbody td{padding:11px 14px;border-top:1px solid var(--line)}
+  tbody tr:nth-child(even){background:#f9fbfa}
+  tbody tr:hover{background:#eef6f2}
+  .badge{display:inline-block;padding:3px 9px;border-radius:12px;font-size:.72rem;font-weight:700}
+  .badge.committed{background:#dff3e8;color:var(--olive-dark)}
+  .badge.target{background:#e2eefb;color:var(--blue-dark)}
+  .badge.roster{background:#eee;color:#444}
+  .dash-note{font-size:.82rem;color:var(--muted);margin-top:14px}
+  .dash-note code{background:#e6ece8;padding:2px 6px;border-radius:5px;font-size:.82rem}
+
+  /* News & Links */
+  .cols{display:grid;grid-template-columns:1.6fr 1fr;gap:28px}
+  .news-item{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px 22px;box-shadow:var(--shadow);margin-bottom:16px}
+  .news-item .date{font-size:.78rem;color:var(--blue-dark);font-weight:700;text-transform:uppercase;letter-spacing:.5px}
+  .news-item h3{font-size:1.15rem;margin:6px 0 6px;font-weight:800}
+  .news-item p{color:#33423b;font-size:.92rem}
+  .links-card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:22px;box-shadow:var(--shadow)}
+  .links-card h3{font-size:1rem;text-transform:uppercase;letter-spacing:1px;color:var(--olive);margin-bottom:14px}
+  .links-card ul{list-style:none}
+  .links-card li{padding:10px 0;border-top:1px solid var(--line);font-weight:600}
+  .links-card li:first-child{border-top:none}
+  .links-card li a{display:flex;justify-content:space-between;align-items:center}
+  .links-card li a:after{content:"→";color:var(--blue)}
+
+  /* Subscribe strip */
+  .subscribe{background:var(--olive);color:#fff;text-align:center}
+  .subscribe h2{font-size:1.8rem;font-weight:900}
+  .subscribe p{color:#dcefe6;margin:10px 0 22px}
+  .plat{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+  .plat a{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.35);color:#fff;padding:11px 20px;border-radius:10px;font-weight:700}
+  .plat a:hover{background:rgba(255,255,255,.22);text-decoration:none}
+
+  footer{background:var(--olive-dark);color:#bcd8cc;text-align:center;padding:30px 0;font-size:.88rem}
+  footer .brand{justify-content:center;margin-bottom:8px}
+
+  @media(max-width:760px){
+    .hero h1{font-size:2.1rem}
+    .cols{grid-template-columns:1fr}
+    .menu{display:none}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap nav">
+    <div class="brand"><span class="dot"></span> THE UPTOWN UPDATE</div>
+    <nav class="menu">
+      <a href="#episodes">Episodes</a>
+      <a href="#dashboard">Recruiting Dashboard</a>
+      <a href="#news">News &amp; Links</a>
+      <a href="#subscribe">Subscribe</a>
+    </nav>
+  </div>
+</header>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="wrap">
+    <span class="tag">Tulane Football Podcast</span>
+    <h1>Green Wave football, broken down every week.</h1>
+    <p>Your home for The Uptown Update — episode archive, live recruiting &amp; roster dashboard, and the news that matters on the Fly.</p>
+    <div class="cta">
+      <a class="btn btn-primary" href="#episodes">Listen to Episodes</a>
+      <a class="btn btn-ghost" href="#dashboard">View Recruiting Board</a>
+    </div>
+  </div>
+</div>
+
+<!-- EPISODES -->
+<section id="episodes">
+  <div class="wrap">
+    <div class="section-head" style="text-align:center">
+      <div class="kicker">The Archive</div>
+      <h2>Podcast Episodes</h2>
+      <p style="margin-left:auto;margin-right:auto">Pick your platform, then tap any episode to listen. 115 episodes and counting — Roll Wave.</p>
+    </div>
+
+    <div class="toggle-wrap">
+      <div class="toggle" id="platToggle">
+        <button data-plat="spotify">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 100 20 10 10 0 000-20zm4.59 14.44a.62.62 0 01-.86.21c-2.35-1.44-5.3-1.76-8.79-.96a.62.62 0 11-.28-1.21c3.81-.87 7.09-.5 9.72 1.1.3.18.39.57.21.86zm1.22-2.72a.78.78 0 01-1.07.26c-2.69-1.65-6.79-2.13-9.97-1.17a.78.78 0 11-.45-1.49c3.63-1.1 8.15-.56 11.24 1.33.36.22.48.7.25 1.07zm.11-2.84C14.8 8.95 9.4 8.76 6.3 9.7a.94.94 0 11-.54-1.8c3.56-1.08 9.52-.87 13.28 1.36a.94.94 0 01-.96 1.62z"/></svg>
+          Spotify
+        </button>
+        <button data-plat="apple">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 00-1.6 19.87v-5.2a3.6 3.6 0 113.2 0v5.2A10 10 0 0012 2zm0 4.6a2.4 2.4 0 100 4.8 2.4 2.4 0 000-4.8zm0 6.2a2.2 2.2 0 00-1.1 4.1v2.7a1.1 1.1 0 002.2 0v-2.7A2.2 2.2 0 0012 12.8z"/></svg>
+          Apple
+        </button>
+        <button data-plat="soundcloud">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17 9c-.3 0-.6 0-.9.1A5 5 0 007 8.7a1 1 0 00-.6.9V17a1 1 0 001 1h9.6a4 4 0 000-8zM4 11a.5.5 0 00-.5.5v5a.5.5 0 001 0v-5A.5.5 0 004 11zm-2 1a.5.5 0 00-.5.5v3a.5.5 0 001 0v-3A.5.5 0 002 12z"/></svg>
+          SoundCloud
+        </button>
+      </div>
+      <div class="platform-hint" id="platHint"></div>
+    </div>
+
+    <div class="ep-list" id="epList"></div>
+    <div class="ep-more">
+      <a class="btn btn-primary" id="allEpBtn" href="#" target="_blank" rel="noopener">See all 115 episodes</a>
+    </div>
+  </div>
+</section>
+
+<!-- DASHBOARD -->
+<section id="dashboard">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="kicker">Fan Tools</div>
+      <h2>Recruiting &amp; Roster Dashboard</h2>
+      <p>A live summary of the Green Wave recruiting board and roster, pulled straight from your Google Sheet. Search, filter, and sort.</p>
+    </div>
+
+    <div class="stat-grid" id="statGrid"></div>
+
+    <div class="dash-controls">
+      <input type="text" id="search" placeholder="Search prospects…">
+      <span id="filterSlots" style="display:contents"></span>
+    </div>
+
+    <div class="table-card">
+      <table>
+        <thead><tr id="tableHead"></tr></thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+    <p class="dash-note" id="dashNote"></p>
+  </div>
+</section>
+
+<!-- NEWS & LINKS -->
+<section id="news">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="kicker">Around the Program</div>
+      <h2>News &amp; Helpful Links</h2>
+    </div>
+    <div class="cols">
+      <div id="newsList"></div>
+      <div>
+        <div class="links-card">
+          <h3>Helpful Links</h3>
+          <ul>
+            <li><a href="https://tulanegreenwave.com/sports/football" target="_blank" rel="noopener">Official Tulane Football</a></li>
+            <li><a href="https://tulanegreenwave.com/sports/football/schedule" target="_blank" rel="noopener">Full Schedule</a></li>
+            <li><a href="https://tulanegreenwave.com/sports/football/roster" target="_blank" rel="noopener">Team Roster</a></li>
+            <li><a href="https://theamerican.org/" target="_blank" rel="noopener">The American Conference</a></li>
+            <li><a href="#dashboard">Recruiting Board</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SUBSCRIBE -->
+<section id="subscribe" class="subscribe">
+  <div class="wrap">
+    <h2>Never miss an episode</h2>
+    <p>Follow The Uptown Update wherever you get your podcasts.</p>
+    <div class="plat">
+      <a href="https://open.spotify.com/show/3sjlodzt2uGjw4nfTr88hc" target="_blank" rel="noopener">Spotify</a>
+      <a href="https://podcasts.apple.com/us/podcast/the-uptown-update/id1584718815" target="_blank" rel="noopener">Apple Podcasts</a>
+      <a href="https://soundcloud.com/the-uptown-update" target="_blank" rel="noopener">SoundCloud</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="brand"><span class="dot"></span> THE UPTOWN UPDATE</div>
+    <div>Covering Tulane Green Wave Football • Roll Wave 🌊</div>
+    <div style="margin-top:6px;opacity:.75">&copy; <span id="yr"></span> The Uptown Update. Not affiliated with Tulane University.</div>
+  </div>
+</footer>
+
+<script>
+/* ============================================================
+   THE UPTOWN UPDATE — site config
+   ============================================================ */
+
+/* Google Sheet: published to web as CSV. The dashboard adapts to
+   whatever columns the sheet has — no fixed schema required. */
+const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSdRTPziH5ldHHjKo_2XE2G_Mg6Y3UX1Dp8_vgRA0Fh_OZkf79eCvgfRmZL22T3-Q-b5d-1wwq2KFK2/pub?gid=1793120355&single=true&output=csv";
+
+/* Show pages for each platform */
+const SHOWS = {
+  spotify:    "https://open.spotify.com/show/3sjlodzt2uGjw4nfTr88hc",
+  apple:      "https://podcasts.apple.com/us/podcast/the-uptown-update/id1584718815",
+  soundcloud: "https://soundcloud.com/the-uptown-update"
+};
+const PLAT_LABEL = { spotify:"Spotify", apple:"Apple Podcasts", soundcloud:"SoundCloud" };
+
+/* Episodes. Apple links are exact per-episode deep links.
+   To add exact Spotify/SoundCloud links, replace the "" values below —
+   otherwise those buttons open the show page for that platform. */
+const EPISODES = [
+  {title:"2026 Offseason Ep. 2: Transfer Portal Recap", date:"Feb 2, 2026", len:"50m",
+   apple:"https://podcasts.apple.com/us/podcast/2026-offseason-ep-2-transfer-portal-recap/id1584718815?i=1000747732353", spotify:"", soundcloud:""},
+  {title:"2026 Offseason Ep. 1: CFP Recap and Offseason News", date:"Dec 30, 2025", len:"40m",
+   apple:"https://podcasts.apple.com/us/podcast/2026-offseason-ep-1-cfp-recap-and-offseason-news/id1584718815?i=1000743241740", spotify:"", soundcloud:""},
+  {title:"2025 Season Ep. 18: #11 Tulane @ #6 Ole Miss (CFP)", date:"Dec 17, 2025", len:"27m",
+   apple:"https://podcasts.apple.com/us/podcast/2025-season-ep-18-11-tulane-6-ole-miss-college-football/id1584718815?i=1000741710099", spotify:"", soundcloud:""},
+  {title:"2025 Season Ep. 17: #20 Tulane CFP Bound & AC Champions", date:"Dec 12, 2025", len:"53m",
+   apple:"https://podcasts.apple.com/us/podcast/2025-season-ep-17-20-tulane-cfp-bound-and-ac-champions/id1584718815?i=1000740924334", spotify:"", soundcloud:""},
+  {title:"2025 Season Ep. 16: #20 Tulane vs. #24 UNT feat. Corey Gloor", date:"Dec 5, 2025", len:"1h 10m",
+   apple:"https://podcasts.apple.com/us/podcast/2025-season-ep-16-20-tulane-vs-24-unt-feat-corey-gloor/id1584718815?i=1000739777218", spotify:"", soundcloud:""},
+  {title:"2025 Season Ep. 15: Commissioner Tim Pernetti on Champ Week", date:"Dec 2, 2025", len:"49m",
+   apple:"https://podcasts.apple.com/us/podcast/2025-season-ep-15-commissioner-tim-pernetti-on-champ/id1584718815?i=1000739326843", spotify:"", soundcloud:""},
+  {title:"2025 Season Ep. 14: #24 Tulane vs. Charlotte", date:"Nov 26, 2025", len:"30m",
+   apple:"https://podcasts.apple.com/us/podcast/2025-season-ep-14-24-tulane-vs-charlotte/id1584718815?i=1000738531810", spotify:"", soundcloud:""},
+  {title:"2025 Season Ep. 13: #24 Tulane at Temple", date:"Nov 19, 2025", len:"27m",
+   apple:"https://podcasts.apple.com/us/podcast/2025-season-ep-13-24-tulane-at-temple/id1584718815?i=1000737469536", spotify:"", soundcloud:""}
+];
+
+/* ---- News ---- */
+const NEWS = [
+  {date:"Feb 2, 2026", title:"Transfer portal: who's in, who's out for 2026",
+   body:"Jack and Reid break down every portal move and what the projected depth chart looks like heading into the new season."},
+  {date:"Dec 30, 2025", title:"CFP recap and a new era under Will Hall",
+   body:"Reaction to the playoff run against Ole Miss, the coaching change, and the offseason news shaping the program."},
+  {date:"Dec 12, 2025", title:"American Conference Champions — and CFP bound",
+   body:"The Green Wave capture their fourth straight AC title game appearance and punch a ticket to the College Football Playoff."}
+];
+
+/* ================= RENDER ================= */
+document.getElementById('yr').textContent = new Date().getFullYear();
+
+/* ---------- Episodes + platform toggle ---------- */
+const PLAY_SVG = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>';
+let platform = 'spotify';
+
+function epHref(e){
+  return (e[platform] && e[platform].trim()) ? e[platform] : SHOWS[platform];
+}
+function renderEpisodes(){
+  document.getElementById('epList').innerHTML = EPISODES.map(e=>`
+    <a class="ep-btn ${platform}" href="${epHref(e)}" target="_blank" rel="noopener">
+      <span class="play-ic">${PLAY_SVG}</span>
+      <span class="ep-info">
+        <span class="ep-t">${e.title}</span>
+        <span class="ep-m">${e.date} · ${e.len}</span>
+      </span>
+    </a>`).join('');
+  document.getElementById('allEpBtn').href = SHOWS[platform];
+  const exact = EPISODES.every(e=>e[platform] && e[platform].trim());
+  document.getElementById('platHint').innerHTML = exact
+    ? `Tap an episode to open it on ${PLAT_LABEL[platform]}.`
+    : `Tap an episode to open it on ${PLAT_LABEL[platform]}. (Apple links go straight to each episode; ${PLAT_LABEL[platform]} opens the show page.)`;
+}
+document.querySelectorAll('#platToggle button').forEach(b=>{
+  b.addEventListener('click',()=>{
+    platform = b.dataset.plat;
+    document.querySelectorAll('#platToggle button').forEach(x=>x.classList.toggle('active', x===b));
+    renderEpisodes();
+  });
+});
+document.querySelector('#platToggle button[data-plat="spotify"]').classList.add('active');
+renderEpisodes();
+
+/* ---------- News ---------- */
+document.getElementById('newsList').innerHTML = NEWS.map(n=>`
+  <div class="news-item">
+    <div class="date">${n.date}</div>
+    <h3>${n.title}</h3>
+    <p>${n.body}</p>
+  </div>`).join('');
+
+/* ================= DASHBOARD (adaptive) ================= */
+let COLS = [];          // header names from the sheet
+let DATA = [];          // array of row objects keyed by header
+let CATCOLS = [];       // categorical columns for filters
+let sortKey = null, sortAsc = true;
+const esc = s => String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+function parseCSV(text){
+  const rows = [];
+  let row = [], field = '', inQ = false;
+  for(let i=0;i<text.length;i++){
+    const c = text[i];
+    if(inQ){
+      if(c === '"' && text[i+1] === '"'){ field+='"'; i++; }
+      else if(c === '"'){ inQ = false; }
+      else field += c;
+    } else {
+      if(c === '"') inQ = true;
+      else if(c === ',') { row.push(field); field=''; }
+      else if(c === '\n'){ row.push(field); rows.push(row); row=[]; field=''; }
+      else if(c === '\r'){ /* skip */ }
+      else field += c;
+    }
+  }
+  if(field.length || row.length){ row.push(field); rows.push(row); }
+  return rows.filter(r=>r.length && r.some(v=>v.trim()!==''));
+}
+
+function rowsToObjects(rows){
+  if(!rows.length) return {cols:[],data:[]};
+  const header = rows[0].map(h=>h.trim());
+  const cols = header.map((h,i)=> h || ('Column '+(i+1)));
+  const data = rows.slice(1).map(r=>{
+    const o = {};
+    cols.forEach((c,i)=> o[c] = (r[i]||'').trim());
+    return o;
+  }).filter(o=>Object.values(o).some(v=>v!==''));
+  return {cols,data};
+}
+
+/* status-like badge coloring */
+function badgeHtml(v){
+  const t = v.toLowerCase();
+  let cls = '';
+  if(/commit|signed|enroll/.test(t)) cls='committed';
+  else if(/target|offer|interest|visit/.test(t)) cls='target';
+  else if(/roster|current|return/.test(t)) cls='roster';
+  return cls ? `<span class="badge ${cls}">${esc(v)}</span>` : esc(v);
+}
+
+function findCategoricalCols(){
+  return COLS.filter(c=>{
+    const vals = DATA.map(d=>d[c]).filter(v=>v!=='');
+    const uniq = new Set(vals);
+    return uniq.size>=2 && uniq.size<=12 && uniq.size < DATA.length;
+  });
+}
+
+function renderStats(){
+  const cards = [`<div class="stat"><div class="num">${DATA.length}</div><div class="lbl">Total Prospects</div></div>`];
+  // Break down the first categorical column that looks status-like, else the first categorical col
+  const statusCol = CATCOLS.find(c=>/status|commit|type|stage/i.test(c)) || CATCOLS[0];
+  if(statusCol){
+    const counts = {};
+    DATA.forEach(d=>{ const v=d[statusCol]; if(v) counts[v]=(counts[v]||0)+1; });
+    Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0,3).forEach(([k,n],i)=>{
+      cards.push(`<div class="stat ${i%2?'blue':''}"><div class="num">${n}</div><div class="lbl">${esc(k)}</div></div>`);
+    });
+  }
+  document.getElementById('statGrid').innerHTML = cards.join('');
+}
+
+function buildFilters(){
+  const slots = document.getElementById('filterSlots');
+  slots.innerHTML = CATCOLS.slice(0,3).map((c,i)=>{
+    const opts = [...new Set(DATA.map(d=>d[c]).filter(Boolean))].sort();
+    return `<select class="dashFilter" data-col="${esc(c)}">
+      <option value="">All ${esc(c)}</option>
+      ${opts.map(o=>`<option>${esc(o)}</option>`).join('')}
+    </select>`;
+  }).join('');
+  slots.querySelectorAll('.dashFilter').forEach(sel=>sel.addEventListener('input',renderTable));
+}
+
+function buildHead(){
+  document.getElementById('tableHead').innerHTML =
+    COLS.map(c=>`<th data-key="${esc(c)}">${esc(c)}${' '}</th>`).join('');
+  document.querySelectorAll('#tableHead th').forEach(th=>{
+    th.addEventListener('click',()=>{
+      const k = th.dataset.key;
+      if(sortKey===k) sortAsc=!sortAsc; else {sortKey=k;sortAsc=true;}
+      renderTable();
+    });
+  });
+}
+
+function renderTable(){
+  const q = document.getElementById('search').value.toLowerCase();
+  const filters = [...document.querySelectorAll('.dashFilter')]
+    .map(s=>({col:s.dataset.col,val:s.value})).filter(f=>f.val);
+  let rows = DATA.filter(d=>{
+    const matchQ = !q || COLS.some(c=>String(d[c]).toLowerCase().includes(q));
+    const matchF = filters.every(f=>d[f.col]===f.val);
+    return matchQ && matchF;
+  });
+  if(sortKey){
+    rows.sort((a,b)=>{
+      const x=a[sortKey]||'', y=b[sortKey]||'';
+      return sortAsc ? x.localeCompare(y,undefined,{numeric:true}) : y.localeCompare(x,undefined,{numeric:true});
+    });
+  }
+  const statusCol = CATCOLS.find(c=>/status|commit|type|stage/i.test(c));
+  document.getElementById('tableBody').innerHTML = rows.length ? rows.map(d=>`
+    <tr>${COLS.map((c,i)=>{
+      let cell = c===statusCol ? badgeHtml(d[c]||'') : (i===0 ? `<strong>${esc(d[c]||'—')}</strong>` : esc(d[c]||'—'));
+      return `<td>${cell||'—'}</td>`;
+    }).join('')}</tr>`).join('')
+    : `<tr><td colspan="${COLS.length||1}" style="text-align:center;color:var(--muted);padding:24px">No prospects match your filters.</td></tr>`;
+}
+
+document.getElementById('search').addEventListener('input', renderTable);
+
+function boot(cols, data, note){
+  COLS = cols; DATA = data; CATCOLS = findCategoricalCols();
+  renderStats(); buildFilters(); buildHead(); renderTable();
+  document.getElementById('dashNote').innerHTML = note;
+}
+
+fetch(SHEET_CSV_URL)
+  .then(r=>{ if(!r.ok) throw new Error('HTTP '+r.status); return r.text(); })
+  .then(txt=>{
+    const {cols,data} = rowsToObjects(parseCSV(txt));
+    if(!data.length) throw new Error('no rows found');
+    boot(cols, data, 'Live data — synced from the recruiting Google Sheet. Search, filter, and click any column header to sort.');
+  })
+  .catch(err=>{
+    document.getElementById('statGrid').innerHTML =
+      `<div class="stat"><div class="num">—</div><div class="lbl">Awaiting data</div></div>`;
+    document.getElementById('dashNote').innerHTML =
+      '⚠️ Could not load the recruiting sheet ('+esc(err.message)+'). Make sure it is still <strong>Published to web as CSV</strong> in Google Sheets (File → Share → Publish to web).';
+  });
+</script>
+</body>
+</html>
