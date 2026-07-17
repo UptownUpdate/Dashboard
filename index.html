@@ -128,6 +128,12 @@
 
   /* Dashboard */
   #dashboard{background:linear-gradient(180deg,#eef3ef,#f6f8f6)}
+  .dash-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:24px}
+  .dash-tabs button{
+    border:1px solid var(--line);background:#fff;color:var(--olive-dark);cursor:pointer;
+    font-weight:700;font-size:.9rem;padding:10px 18px;border-radius:10px;transition:all .15s}
+  .dash-tabs button:hover{border-color:var(--olive-light)}
+  .dash-tabs button.active{background:var(--olive);color:#fff;border-color:var(--olive)}
   .dash-controls{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:24px}
   .dash-controls input,.dash-controls select{
     padding:10px 14px;border:1px solid var(--line);border-radius:10px;font-size:.9rem;background:#fff;color:var(--ink)}
@@ -249,9 +255,11 @@
   <div class="wrap">
     <div class="section-head">
       <div class="kicker">Fan Tools</div>
-      <h2>Recruiting &amp; Roster Dashboard</h2>
-      <p>A live summary of the Green Wave recruiting board and roster, pulled straight from your Google Sheet. Search, filter, and sort.</p>
+      <h2>Green Wave Dashboard</h2>
+      <p>Live views of the roster, recruiting board, and transfer portal — pulled straight from the Google Sheet. Search, filter, and sort any tab.</p>
     </div>
+
+    <div class="dash-tabs" id="dashTabs"></div>
 
     <div class="stat-grid" id="statGrid"></div>
 
@@ -321,9 +329,16 @@
    THE UPTOWN UPDATE — site config
    ============================================================ */
 
-/* Google Sheet: published to web as CSV. The dashboard adapts to
-   whatever columns the sheet has — no fixed schema required. */
-const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSdRTPziH5ldHHjKo_2XE2G_Mg6Y3UX1Dp8_vgRA0Fh_OZkf79eCvgfRmZL22T3-Q-b5d-1wwq2KFK2/pub?output=csv";
+/* Dashboard tabs. Each tab is one Google Sheet tab published to web as CSV.
+   To add a tab: in Google Sheets → File → Share → Publish to web → pick the
+   tab → CSV, then paste its link below. The "url" is what changes per tab
+   (it has a different gid=… number). Leave a url as "" to hide that tab.
+   The table adapts to whatever columns each tab has — no fixed schema. */
+const DASHBOARDS = [
+  { name:"Recruiting",      url:"https://docs.google.com/spreadsheets/d/e/2PACX-1vSdRTPziH5ldHHjKo_2XE2G_Mg6Y3UX1Dp8_vgRA0Fh_OZkf79eCvgfRmZL22T3-Q-b5d-1wwq2KFK2/pub?gid=1793120355&single=true&output=csv" },
+  { name:"Current Roster",  url:"https://docs.google.com/spreadsheets/d/e/2PACX-1vSdRTPziH5ldHHjKo_2XE2G_Mg6Y3UX1Dp8_vgRA0Fh_OZkf79eCvgfRmZL22T3-Q-b5d-1wwq2KFK2/pub?gid=857072647&single=true&output=csv" },
+  { name:"Transfer Portal", url:"https://docs.google.com/spreadsheets/d/e/2PACX-1vSdRTPziH5ldHHjKo_2XE2G_Mg6Y3UX1Dp8_vgRA0Fh_OZkf79eCvgfRmZL22T3-Q-b5d-1wwq2KFK2/pub?gid=264181596&single=true&output=csv" }
+];
 
 /* Show pages for each platform */
 const SHOWS = {
@@ -536,19 +551,57 @@ function boot(cols, data, note){
   document.getElementById('dashNote').innerHTML = note;
 }
 
-fetch(SHEET_CSV_URL)
-  .then(r=>{ if(!r.ok) throw new Error('HTTP '+r.status); return r.text(); })
-  .then(txt=>{
-    const {cols,data} = rowsToObjects(parseCSV(txt));
-    if(!data.length) throw new Error('no rows found');
-    boot(cols, data, 'Live data — synced from the recruiting Google Sheet. Search, filter, and click any column header to sort.');
-  })
-  .catch(err=>{
-    document.getElementById('statGrid').innerHTML =
-      `<div class="stat"><div class="num">—</div><div class="lbl">Awaiting data</div></div>`;
-    document.getElementById('dashNote').innerHTML =
-      '⚠️ Could not load the recruiting sheet ('+esc(err.message)+'). Make sure it is still <strong>Published to web as CSV</strong> in Google Sheets (File → Share → Publish to web).';
-  });
+/* ---- Multi-tab loading ---- */
+const TABS = DASHBOARDS.filter(t => t.url && t.url.trim());   // only connected tabs show
+const cache = {};
+let activeTab = -1;
+
+function showError(msg){
+  document.getElementById('statGrid').innerHTML =
+    `<div class="stat"><div class="num">—</div><div class="lbl">Awaiting data</div></div>`;
+  document.getElementById('tableHead').innerHTML = '';
+  document.getElementById('tableBody').innerHTML = '';
+  document.getElementById('filterSlots').innerHTML = '';
+  document.getElementById('dashNote').innerHTML = msg;
+}
+
+function loadTab(i){
+  activeTab = i;
+  sortKey = null; sortAsc = true;
+  document.getElementById('search').value = '';
+  document.querySelectorAll('#dashTabs button').forEach((b,idx)=>b.classList.toggle('active', idx===i));
+  const tab = TABS[i];
+  const note = `Live data — synced from the <strong>${esc(tab.name)}</strong> tab. Search, filter, and click any column header to sort.`;
+
+  if(cache[i]){ boot(cache[i].cols, cache[i].data, note); return; }
+  document.getElementById('dashNote').innerHTML = 'Loading '+esc(tab.name)+'…';
+  fetch(tab.url)
+    .then(r=>{ if(!r.ok) throw new Error('HTTP '+r.status); return r.text(); })
+    .then(txt=>{
+      const {cols,data} = rowsToObjects(parseCSV(txt));
+      if(!data.length) throw new Error('no rows found');
+      cache[i] = {cols,data};
+      if(activeTab===i) boot(cols, data, note);
+    })
+    .catch(err=>{
+      if(activeTab===i) showError('⚠️ Could not load the <strong>'+esc(tab.name)+
+        '</strong> tab ('+esc(err.message)+'). Make sure that tab is <strong>Published to web as CSV</strong> in Google Sheets.');
+    });
+}
+
+function renderDashTabs(){
+  const wrap = document.getElementById('dashTabs');
+  if(!TABS.length){
+    wrap.style.display='none';
+    showError('No dashboard tab connected yet. Add a published-to-web CSV link in the <code>DASHBOARDS</code> config near the top of the page script.');
+    return;
+  }
+  wrap.style.display = TABS.length>1 ? 'flex' : 'none';   // hide the bar if there's only one tab
+  wrap.innerHTML = TABS.map((t,i)=>`<button data-i="${i}">${esc(t.name)}</button>`).join('');
+  wrap.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>loadTab(+b.dataset.i)));
+  loadTab(0);
+}
+renderDashTabs();
 </script>
 </body>
 </html>
