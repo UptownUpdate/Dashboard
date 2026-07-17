@@ -3,7 +3,21 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>The Uptown Update — Tulane Football Podcast</title>
+<title>Uptown Update Dashboard</title>
+<meta name="description" content="The Uptown Update — your home for Tulane Green Wave football: episodes, recruiting dashboard, and news.">
+
+<!-- Browser tab icon -->
+<link rel="icon" type="image/png" href="logo.png">
+<link rel="apple-touch-icon" href="logo.png">
+
+<!-- Social share preview (iMessage, Facebook, LinkedIn, etc.) -->
+<meta property="og:title" content="Uptown Update Dashboard">
+<meta property="og:description" content="Tulane Green Wave football — episodes, recruiting dashboard, and news.">
+<meta property="og:image" content="logo.png">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Uptown Update Dashboard">
+<meta name="twitter:image" content="logo.png">
 <style>
   :root{
     --olive:#006747;        /* Tulane green/olive */
@@ -36,7 +50,7 @@
   }
   .nav{display:flex;align-items:center;justify-content:space-between;height:64px}
   .brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:1.15rem;color:#fff;letter-spacing:.3px}
-  .brand .dot{width:12px;height:12px;border-radius:50%;background:var(--blue)}
+  .brand-logo{height:40px;width:40px;border-radius:50%;background:#fff;object-fit:contain;padding:2px}
   .menu{display:flex;gap:6px;flex-wrap:wrap}
   .menu a{color:#e9f3ee;font-weight:600;font-size:.92rem;padding:8px 12px;border-radius:8px}
   .menu a:hover{background:rgba(255,255,255,.12);text-decoration:none}
@@ -173,7 +187,7 @@
 
 <header>
   <div class="wrap nav">
-    <div class="brand"><span class="dot"></span> THE UPTOWN UPDATE</div>
+    <div class="brand"><img src="logo.png" alt="The Uptown Update logo" class="brand-logo"> THE UPTOWN UPDATE</div>
     <nav class="menu">
       <a href="#episodes">Episodes</a>
       <a href="#dashboard">Recruiting Dashboard</a>
