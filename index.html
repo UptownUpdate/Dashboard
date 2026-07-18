@@ -233,19 +233,22 @@
   }
   .pos-label{display:inline-block;background:var(--olive);color:#fff;font-weight:800;font-size:.68rem;
     letter-spacing:.6px;padding:3px 9px;border-radius:7px;margin-bottom:7px}
-  .pl{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 6px;padding:3px 4px;border-radius:6px;font-size:.76rem;line-height:1.2;border-left:3px solid transparent}
-  .pl+.pl{margin-top:2px}
+  .pl{padding:4px 5px;border-radius:6px;font-size:.76rem;line-height:1.25;border-left:3px solid transparent}
+  .pl+.pl{margin-top:3px}
   .pl.s{background:#fff8e1;border-left-color:#ffc21f}
   .pl.f{background:#eef7f0}
   .pl.w{border-left-color:#cfd6d2}
-  .pl .num{font-weight:800;color:var(--olive-dark);min-width:20px;font-size:.72rem}
-  .pl a{color:var(--ink);font-weight:700;text-decoration:none;flex:1;min-width:60px}
-  .pl a:hover{color:var(--blue-dark);text-decoration:underline}
-  .pl .meta{color:var(--muted);font-size:.66rem;font-weight:600;white-space:nowrap;flex-basis:100%;padding-left:24px}
-  .pl .rt{background:var(--blue);color:#fff;font-size:.6rem;font-weight:800;padding:1px 5px;border-radius:6px}
+  .pl-top{display:flex;flex-wrap:wrap;align-items:baseline;gap:3px 6px}
+  .pl-sub{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 8px;margin-top:2px;color:var(--muted);font-size:.66rem;font-weight:600}
+  .pl-sub .num{font-weight:800;color:var(--olive-dark);font-size:.68rem}
+  .pl-sub .hw{white-space:nowrap}
+  .pl-top a{color:var(--ink);font-weight:700;text-decoration:none;flex:1;min-width:60px}
+  .pl-top a:hover{color:var(--blue-dark);text-decoration:underline}
+  .pl .rt{background:var(--blue);color:#fff;font-size:.6rem;font-weight:800;padding:1px 5px;border-radius:6px;order:-2}
+  .pl .cl{background:var(--olive);color:#fff;font-size:.58rem;font-weight:800;padding:1px 5px;border-radius:6px;letter-spacing:.3px;order:-1}
   .pl.or{border-left-color:#b9c6bf;background:#f3f6f4}
-  .pl .tie{background:#e6ece8;color:var(--olive-dark);font-size:.56rem;font-weight:800;padding:1px 4px;border-radius:5px;letter-spacing:.5px}
-  .pl .noname{color:var(--muted);font-weight:700;flex:1;min-width:60px}
+  .pl .tie{background:#e6ece8;color:var(--olive-dark);font-size:.56rem;font-weight:800;padding:1px 4px;border-radius:5px;letter-spacing:.5px;order:-3}
+  .pl-top .noname{color:var(--muted);font-weight:700;flex:1;min-width:60px}
   .dc-special{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
   .dc-ee{background:var(--card);border:1px solid var(--line);border-left:4px solid #7cbf93;border-radius:12px;padding:14px 18px;margin-top:6px}
   .dc-ee h4{font-size:.85rem;text-transform:uppercase;letter-spacing:1px;color:var(--olive-dark);margin-bottom:8px}
@@ -1043,6 +1046,15 @@ function dcParseNumName(s){
   const m = s.match(/^#?\s*(\d+)\s+(.+)$/);
   return m ? { num:m[1], name:m[2].trim() } : { num:'', name:s };
 }
+/* A class/eligibility token: FR, SO, JR, SR, GR, plus redshirt forms like R-JR / RS-SO */
+function dcIsClass(s){ return /^(R[\s.-]?|RS[\s.-]?|GS?[\s.-]?)?(FR|SO|JR|SR|GR|GS)$/i.test((s||'').trim()); }
+/* Read a player's class from its own column (header spelled Class / Yr / Year / Cl / Elig...) */
+function dcPickClass(r){
+  for(const k in r){
+    if(/^(class|yr|year|cl|elig\w*)$/i.test(k.trim())){ const v=(r[k]||'').trim(); if(v) return v; }
+  }
+  return '';
+}
 
 /* Group CSV rows into { unit: { key: [label, players[]] } } by field position */
 function dcBuild(rows){
@@ -1062,12 +1074,17 @@ function dcBuild(rows){
     let size = (r['Size']||'').trim();
     if(!size && numName && !/^#/.test(numName) && /\d\s*['\u2019]/.test(numName)){ size=numName; numName=''; }
     const {num,name} = dcParseNumName(numName);
+    // rating + class (class lives in its own column; tolerate a few header spellings)
+    let rating = (r['Rating']||'').trim();
+    let cls = dcPickClass(r);
+    // Legacy rows (K/P/LS) stored the class token in the Rating column
+    if(!cls && rating && dcIsClass(rating)){ cls=rating; rating=''; }
     // depth order + "or" ties
     const ord = (r['Depth Chart Order']||'').trim().toLowerCase();
     let tie=false, eff;
     if(ord==='or'){ tie=true; eff=lastOrder[unit+key]||1; }
     else { eff=parseInt(ord,10)||0; lastOrder[unit+key]=eff; }
-    const player = { num, name, size, rating:(r['Rating']||'').trim(), tie, starter:(eff===1) };
+    const player = { num, name, size, rating, cls, tie, starter:(eff===1) };
     if(!units[unit][key]) units[unit][key]=[posRaw,[]];
     units[unit][key][1].push(player);
   });
@@ -1078,12 +1095,17 @@ function dcPlayers(list){
   return list.map(p=>{
     const cls = [p.starter?'s':'', p.tie?'or':''].filter(Boolean).join(' ');
     const tie = p.tie ? `<span class="tie">OR</span>` : '';
-    const num = `<span class="num">${p.num?('#'+esc(p.num)):''}</span>`;
+    const rt  = p.rating ? `<span class="rt">${esc(p.rating)}</span>` : '';
+    const cl  = p.cls ? `<span class="cl">${esc(p.cls)}</span>` : '';
     const nm  = p.name ? `<a href="${dcLink(p.name)}" target="_blank" rel="noopener">${esc(p.name)}</a>`
                        : `<span class="noname">—</span>`;
-    const rt  = p.rating ? `<span class="rt">${esc(p.rating)}</span>` : '';
-    const meta= p.size ? `<span class="meta">${esc(p.size)}</span>` : '';
-    return `<div class="pl${cls?' '+cls:''}">${tie}${num}${nm}${rt}${meta}</div>`;
+    // Top line: rating, class, name
+    const top = `<div class="pl-top">${tie}${rt}${cl}${nm}</div>`;
+    // Second line: jersey number, height & weight
+    const num = p.num ? `<span class="num">#${esc(p.num)}</span>` : '';
+    const hw  = p.size ? `<span class="hw">${esc(p.size)}</span>` : '';
+    const sub = (num||hw) ? `<div class="pl-sub">${num}${hw}</div>` : '';
+    return `<div class="pl${cls?' '+cls:''}">${top}${sub}</div>`;
   }).join('');
 }
 function dcPos(arr,key){
