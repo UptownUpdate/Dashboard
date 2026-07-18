@@ -1008,7 +1008,7 @@ function dcFormation(unit){
   const cells = Object.keys(unit.pos).map(k=>dcPos(unit.pos[k],k)).join('');
   return `<div class="dc-unit"><h3>${esc(unit.label)}</h3>`+
     `<div class="dc-hint">← swipe / scroll sideways to see every position →</div>`+
-    `<div class="field"><div class="formation" style="grid-template-areas:${areas}">${cells}</div></div></div>`;
+    `<div class="field"><div class="formation" style='grid-template-areas:${areas}'>${cells}</div></div></div>`;
 }
 let dcDrawn = false;
 function renderDepthChart(){
