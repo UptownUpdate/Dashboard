@@ -243,6 +243,9 @@
   .pl a:hover{color:var(--blue-dark);text-decoration:underline}
   .pl .meta{color:var(--muted);font-size:.66rem;font-weight:600;white-space:nowrap;flex-basis:100%;padding-left:24px}
   .pl .rt{background:var(--blue);color:#fff;font-size:.6rem;font-weight:800;padding:1px 5px;border-radius:6px}
+  .pl.or{border-left-color:#b9c6bf;background:#f3f6f4}
+  .pl .tie{background:#e6ece8;color:var(--olive-dark);font-size:.56rem;font-weight:800;padding:1px 4px;border-radius:5px;letter-spacing:.5px}
+  .pl .noname{color:var(--muted);font-weight:700;flex:1;min-width:60px}
   .dc-special{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
   .dc-ee{background:var(--card);border:1px solid var(--line);border-left:4px solid #7cbf93;border-radius:12px;padding:14px 18px;margin-top:6px}
   .dc-ee h4{font-size:.85rem;text-transform:uppercase;letter-spacing:1px;color:var(--olive-dark);margin-bottom:8px}
@@ -581,66 +584,39 @@ const DASHBOARDS = [
 ];
 
 /* ---- DEPTH CHART (field-formation visual for the "Depth Chart" tab) ----
-   Each player is [ #num, Name, Class, Height, Weight, Rating, Status ].
-   Status: 's'=starter, 'f'=freshman, 'w'=walk-on (PWO), ''=none.
-   To edit: just change the arrays below. Names auto-link to the player's
-   page via a Tulane-site search. Order = depth (top = starter). */
-const DC = {
+   The chart is now driven LIVE by a published Google Sheet so it can be edited
+   without touching this file. Sheet columns:
+     Position | Depth Chart Order | Rating | Number & Name | Size
+   - "Depth Chart Order" of "or" means the player is tied (equal) with the one above.
+   - Position names are mapped to spots on the field below (DC_LAYOUT).
+   To point at a different sheet tab, change the gid in DEPTH_CHART_CSV. */
+const DEPTH_CHART_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSdRTPziH5ldHHjKo_2XE2G_Mg6Y3UX1Dp8_vgRA0Fh_OZkf79eCvgfRmZL22T3-Q-b5d-1wwq2KFK2/pub?gid=1489080048&single=true&output=csv";
+
+/* Field layout. Each grid cell name is a position "key"; the map ties a sheet
+   Position (uppercased, colon-stripped) to its key. SB (Superback) sits just
+   left of the QB. Positions absent from the sheet simply render empty. */
+const DC_LAYOUT = {
   offense: {
-    label:"Offense",
-    grid:[
+    label: "Offense",
+    grid: [
       "wrL  slot .    lt   lg   c    rg   rt   .    te   wrR",
-      ".    .    .    .    .    qb   .    .    .    .    .",
+      ".    .    .    .    sb   qb   .    .    .    .    .",
       ".    .    .    .    .    rb   .    .    .    .    ."
     ],
-    pos:{
-      wrL:["WR",[[5,"Anthony Brown-Stephens","R-SR","5'10\"","175",82,"s"],[8,"Bredell Richardson","R-FR","6'1\"","195",78,""],[16,"Garrett Mmahat","R-SR","6'0\"","196",77,""],[15,"Antwaun Parham","R-FR","6'4\"","206",75,""],[82,"Keyshawn Coleman","FR","6'4\"","195","","f"]]],
-      slot:["SLOT",[[1,"ZyCarl Lewis","R-SO","5'10\"","170",80,"s"],[83,"Seth Gale","R-SO","5'10\"","175","","w"],[37,"Cash Semonza","R-FR","5'10\"","165","","w"]]],
-      wrR:["WR",[[2,"Destyn Hill","R-JR","6'1\"","195",81,"s"],[17,"Oliver Mitchell Jr.","R-FR","6'1\"","190",79,""],[85,"Gabe Daniels","R-FR","6'2\"","190",77,""],[26,"Walker Davis","R-SO","6'0\"","196","","w"],[81,"Gary \"Deuce\" Hadley Jr.","FR","6'2\"","185","","f"]]],
-      te:["TE",[[19,"Dawson Johnson","R-SO","6'3\"","235",78,"s"],[80,"Vance Bolyard","R-JR","6'5\"","240",77,""],[13,"Ty Thompson","R-SR","6'4\"","240",76,""],[86,"Gabe Lovorn","R-FR","6'4\"","240",76,""],[10,"Kellen Tasby","R-SO","6'6\"","230",72,""],[87,"Cam Roberts","R-FR","6'5\"","240",74,""],[22,"Jackson Judge","R-JR","6'1\"","220","","w"],[89,"DJ Cicero","R-SO","6'3\"","225","","w"]]],
-      lt:["LT",[[55,"Dominic Steward","R-SO","6'5\"","290",79,"s"],[77,"Darion Reed","R-JR","6'7\"","330",77,""],[70,"Juelz Baptiste","R-FR","6'5\"","330",75,""],[74,"Jaxon Ducre","R-SO","6'3\"","260","","w"]]],
-      lg:["LG",[[73,"Elijah Baker","R-SO","6'3\"","290",80,"s"],[76,"Gresham Perry","R-FR","6'5\"","322",76,""],[68,"Robbie Pizzolato","R-JR","6'4\"","310",73,""],[62,"Aiden Martin","FR","6'5\"","300","","f"]]],
-      c:["C",[[51,"John Bock","R-SR","6'3\"","310",79,"s"],[60,"Gavin Marks","SO","6'3\"","300",77,""],[75,"Colin O'Carroll","R-SO","6'2\"","295","","w"],[65,"Brady Wyatt","FR","6'6\"","330","","f"]]],
-      rg:["RG",[[78,"Reese Baker","R-SO","6'5\"","300",81,"s"],[71,"Riley Rushing","JR","6'4\"","325",78,""],[61,"Leo Wulffraat","R-SO","6'2\"","250","","w"]]],
-      rt:["RT",[[58,"Ryan Mickow","R-JR","6'7\"","315",79,"s"],[72,"Mitch Hodnett","R-SO","6'5\"","300",76,""],[52,"Tristen Fortenberry","R-SO","6'6\"","310",74,""]]],
-      qb:["QB",[[3,"Kadin Semonza","R-JR","5'11\"","196",77,"s"],[9,"Zeon Chriss","SR","6'3\"","215",77,""],[14,"Dagan Bruno","R-SO","6'2\"","205",75,""],[7,"Cade Scott","R-FR","6'5\"","210",73,""],[4,"Jay Beamon","R-FR","6'4\"","210",73,""],[32,"Jordan West","FR","5'8\"","175","","w"]]],
-      rb:["RB",[[12,"Jaylin Lucas","R-SR","5'9\"","170",80,"s"],[0,"Maurice Turner","R-SR","5'10\"","195",80,""],[25,"Jamauri McClure","R-SO","5'10\"","195",83,""],[6,"Johnnie Daniels","SR","5'10\"","215",78,""],[21,"DJ Dugar Jr.","R-FR","6'1\"","215",76,""]]]
-    }
+    map: { "X WR":"wrL", "SLOT WR":"slot", "Y WR":"wrR", "LT":"lt", "LG":"lg",
+           "C":"c", "RG":"rg", "RT":"rt", "TE":"te", "SB":"sb", "QB":"qb", "RB":"rb" }
   },
   defense: {
-    label:"Defense",
-    grid:[
+    label: "Defense",
+    grid: [
       "cbL  spear .    de   dl   nt   bandit .    cbR",
       ".    .     .    mlb  .    wlb  .      .    .",
       ".    .     ss   .    .    .    fs     .    ."
     ],
-    pos:{
-      de:["DE",[[99,"Joshua Lewis","R-FR","6'5\"","275",78,"s"],[51,"Reshad Sterling","R-FR","6'3\"","260",77,""],[10,"Gerrod Henderson","R-SR","6'2\"","250",77,""],[47,"Michael Guruli","R-JR","5'11\"","230","","w"],[90,"Jordyn Crites","FR","6'7\"","260","","f"]]],
-      dl:["DL",[[45,"Ed Smith","R-SR","6'3\"","305",82,"s"],[96,"Geordan Guidry","R-SO","6'2\"","280",77,""],[97,"Nik Alston","R-FR","6'3\"","265",75,""],[51,"Jack Stivers","R-SO","6'3\"","280","","w"],[69,"AJ Westfield","FR","6'3\"","280","","f"]]],
-      nt:["NT",[[94,"Derrick Shepard","R-SR","6'3\"","320",79,"s"],[92,"Armondous Cooley","R-SR","6'3\"","310",77,""],[40,"Warren Roberts Jr.","R-FR","6'2\"","220",75,""],[98,"PaLanding Drammeh","R-FR","6'2\"","300",75,""],[91,"Jackson Norwood","FR","6'3\"","270","","w"]]],
-      bandit:["BANDIT",[[15,"Jordan McAllister","JR","6'3\"","245",83,"s"],[48,"Jahrie Garner","R-JR","6'3\"","235",78,""],[89,"Miles Smith","R-FR","6'2\"","222","","w"],[58,"Cayden Dees","FR","6'3\"","250","","f"]]],
-      mlb:["MLB",[[2,"Dickson Agu","R-JR","6'2\"","220",84,"s"],[42,"Makai Williams","SR","6'1\"","232",78,""],[43,"Grayson McPherson","R-FR","6'3\"","215","","w"],[54,"Jeffrey Curtis","FR","5'10\"","200","","w"]]],
-      wlb:["WLB",[[4,"Chris Rodgers","SR","6'2\"","230",82,"s"],[11,"Dalton Hughes","R-SR","6'3\"","220",78,""],[44,"Jean Claude Joseph","R-JR","6'0\"","225",75,""],[28,"Dylan Brasher","FR","6'2\"","215","","f"]]],
-      cbL:["CB",[[5,"E'Zaiah Shine","R-SO","6'1\"","196",81,"s"],[12,"Anthony Rogers","R-SO","5'11\"","175",77,""],[0,"Shaun Nicholas","JR","6'4\"","200",74,""],[33,"Rodrek Williams","R-SR","5'9\"","175",70,""]]],
-      spear:["SPEAR",[[13,"Kajuan Banks","R-JR","5'10\"","185",79,"s"],[3,"Tavare Smith","SR","5'10\"","180",78,""],[24,"Michael Igbinoghene","R-FR","5'10\"","192",74,""],[30,"Syre Gilmore","FR","5'10\"","185","","w"]]],
-      cbR:["CB",[[21,"Macho Stevenson","JR","6'1\"","190",80,"s"],[22,"Justin Agu","R-SR","6'2\"","185",78,""],[9,"LJ Green","R-JR","5'10\"","175",77,""],[14,"Armani Cargo","R-SO","5'10\"","185",75,""],[23,"Orion Saunders","FR","6'4\"","180","","f"]]],
-      ss:["SS",[[7,"Kevin Adams","R-JR","5'10\"","196",80,"s"],[8,"Joshua Moore","R-JR","6'2\"","205",78,""],[27,"Chase Green","R-SO","5'10\"","195",76,""],[20,"Myrone Jean","FR","6'4\"","185","","f"]]],
-      fs:["FS",[[1,"Jack Tchienchou","R-JR","5'10\"","185",85,"s"],[6,"Joshua Sims","R-FR","6'0\"","190",78,""],[26,"Dorion Jackson","R-JR","6'2\"","212",75,""],[31,"Carson Klein","R-SO","6'2\"","205",75,""],[36,"LJ Moton","FR","6'4\"","190","","f"]]]
-    }
+    map: { "LCB":"cbL", "SPEAR":"spear", "DE":"de", "DL":"dl", "NT":"nt",
+           "BANDIT":"bandit", "RCB":"cbR", "MLB":"mlb", "WLB":"wlb", "SS":"ss", "FS":"fs" }
   },
-  special:{
-    label:"Special Teams",
-    units:[
-      ["K",[[96,"Jackson Courville","R-JR","5'10\"","185","",""],[57,"Jason Arredondo","SO","5'10\"","235","",""],[20,"Gabe Mocek","R-FR","6'0\"","220","","w"]]],
-      ["P",[[46,"Zach Marini","R-SO","5'11\"","170","",""],[34,"Williams Hudlow","SO","5'11\"","215","",""]]]
-    ]
-  },
-  earlyEnrollees:[
-    [47,"Zach Dresch","FR","6'3\"","215"],[41,"Chan Lumpkin","FR","6'4\"","215"],
-    [55,"Nick Witherspoon","FR","6'3\"","325"],[59,"Andre Amos Jr.","FR","6'5\"","330"],
-    [67,"Tylan George","FR","6'3\"","330"],[88,"Colby Simpson","FR","6'6\"","232"],
-    [11,"Trace Johnson","FR","6'1\"","186"]
-  ]
+  special: { label:"Special Teams", positions:["K","P","LS"] }
 };
 
 /* News feed. Create a Google Sheet with these column headers in row 1:
@@ -1058,15 +1034,56 @@ function boot(cols, data, note){
   document.getElementById('dashNote').innerHTML = note;
 }
 
-/* ---- Depth chart (field formation) ---- */
+/* ---- Depth chart (field formation, driven by the published Google Sheet) ---- */
 function dcLink(name){ return 'https://www.google.com/search?q='+encodeURIComponent('site:tulanegreenwave.com '+name); }
+
+/* "#7 Kevin Adams" -> {num:'7', name:'Kevin Adams'} ; tolerant of missing #/name */
+function dcParseNumName(s){
+  s = (s||'').trim();
+  const m = s.match(/^#?\s*(\d+)\s+(.+)$/);
+  return m ? { num:m[1], name:m[2].trim() } : { num:'', name:s };
+}
+
+/* Group CSV rows into { unit: { key: [label, players[]] } } by field position */
+function dcBuild(rows){
+  const units = { offense:{}, defense:{}, special:{} };
+  const lastOrder = {};
+  rows.forEach(r=>{
+    const posRaw = (r['Position']||'').replace(/:/g,'').trim().replace(/\s+/g,' ');
+    if(!posRaw) return;
+    const POS = posRaw.toUpperCase();
+    let unit=null, key=null;
+    if(DC_LAYOUT.offense.map[POS]){ unit='offense'; key=DC_LAYOUT.offense.map[POS]; }
+    else if(DC_LAYOUT.defense.map[POS]){ unit='defense'; key=DC_LAYOUT.defense.map[POS]; }
+    else if(DC_LAYOUT.special.positions.includes(POS)){ unit='special'; key=POS; }
+    else return; // unknown position — skip
+    // Some rows (P/LS) put the size into the "Number & Name" column by mistake
+    let numName = (r['Number & Name']||'').trim();
+    let size = (r['Size']||'').trim();
+    if(!size && numName && !/^#/.test(numName) && /\d\s*['\u2019]/.test(numName)){ size=numName; numName=''; }
+    const {num,name} = dcParseNumName(numName);
+    // depth order + "or" ties
+    const ord = (r['Depth Chart Order']||'').trim().toLowerCase();
+    let tie=false, eff;
+    if(ord==='or'){ tie=true; eff=lastOrder[unit+key]||1; }
+    else { eff=parseInt(ord,10)||0; lastOrder[unit+key]=eff; }
+    const player = { num, name, size, rating:(r['Rating']||'').trim(), tie, starter:(eff===1) };
+    if(!units[unit][key]) units[unit][key]=[posRaw,[]];
+    units[unit][key][1].push(player);
+  });
+  return units;
+}
+
 function dcPlayers(list){
   return list.map(p=>{
-    const [num,name,cls,ht,wt,rt,st]=p;
-    return `<div class="pl${st?' '+st:''}"><span class="num">#${num}</span>`+
-      `<a href="${dcLink(name)}" target="_blank" rel="noopener">${esc(name)}</a>`+
-      (rt?`<span class="rt">${rt}</span>`:'')+
-      `<span class="meta">${esc(cls)} · ${esc(ht)} ${esc(wt)}</span></div>`;
+    const cls = [p.starter?'s':'', p.tie?'or':''].filter(Boolean).join(' ');
+    const tie = p.tie ? `<span class="tie">OR</span>` : '';
+    const num = `<span class="num">${p.num?('#'+esc(p.num)):''}</span>`;
+    const nm  = p.name ? `<a href="${dcLink(p.name)}" target="_blank" rel="noopener">${esc(p.name)}</a>`
+                       : `<span class="noname">—</span>`;
+    const rt  = p.rating ? `<span class="rt">${esc(p.rating)}</span>` : '';
+    const meta= p.size ? `<span class="meta">${esc(p.size)}</span>` : '';
+    return `<div class="pl${cls?' '+cls:''}">${tie}${num}${nm}${rt}${meta}</div>`;
   }).join('');
 }
 function dcPos(arr,key){
@@ -1074,34 +1091,47 @@ function dcPos(arr,key){
   const ga = key ? ` style="grid-area:${key}"` : '';
   return `<div class="pos"${ga}><span class="pos-label">${esc(label)}</span>${dcPlayers(list)}</div>`;
 }
-function dcFormation(unit){
-  const areas = unit.grid.map(r=>'"'+r.replace(/\s+/g,' ').trim()+'"').join(' ');
-  const n = unit.grid[0].trim().split(/\s+/).length;          // columns in this formation
+function dcFormation(label, grid, posObj){
+  const areas = grid.map(r=>'"'+r.replace(/\s+/g,' ').trim()+'"').join(' ');
+  const n = grid[0].trim().split(/\s+/).length;               // columns in this formation
   const minW = n*132 + (n-1)*9;                               // keeps tracks readable; field scrolls if narrower
   const style = `grid-template-columns:repeat(${n},minmax(132px,1fr));min-width:${minW}px;grid-template-areas:${areas}`;
-  const cells = Object.keys(unit.pos).map(k=>dcPos(unit.pos[k],k)).join('');
-  return `<div class="dc-unit"><h3>${esc(unit.label)}</h3>`+
+  const cells = Object.keys(posObj).map(k=>dcPos(posObj[k],k)).join('');
+  return `<div class="dc-unit"><h3>${esc(label)}</h3>`+
     `<div class="dc-hint">← swipe / scroll sideways to see every position →</div>`+
     `<div class="field"><div class="formation" style='${style}'>${cells}</div></div></div>`;
 }
 let dcDrawn = false;
 function renderDepthChart(){
   if(dcDrawn) return;
-  const legend = `<div class="dc-legend">
-    <span><i class="dc-key s"></i> Projected Starter</span>
-    <span><i class="dc-key n"></i> Depth</span>
-    <span><i class="dc-key f"></i> Freshman</span>
-    <span><i class="dc-key w"></i> Walk-On (PWO)</span>
-    <span><i class="dc-key" style="background:var(--blue)"></i> Player rating</span>
-  </div>`;
-  const st = `<div class="dc-unit"><h3>${esc(DC.special.label)}</h3><div class="dc-special">`+
-    DC.special.units.map(u=>dcPos(u)).join('')+`</div></div>`;
-  const ee = `<div class="dc-ee"><h4>Early Enrollees</h4><div class="ee-list">`+
-    DC.earlyEnrollees.map(p=>`<span class="ee"><span class="num">#${p[0]}</span>${esc(p[1])} <span style="color:var(--muted);font-weight:600">${esc(p[2])} · ${esc(p[3])} ${esc(p[4])}</span></span>`).join('')+
-    `</div></div>`;
-  document.getElementById('depthChart').innerHTML =
-    legend + dcFormation(DC.offense) + dcFormation(DC.defense) + st + ee;
   dcDrawn = true;
+  const host = document.getElementById('depthChart');
+  host.innerHTML = `<div class="sched-msg">Loading depth chart…</div>`;
+  fetch(DEPTH_CHART_CSV)
+    .then(r=>{ if(!r.ok) throw new Error('HTTP '+r.status); return r.text(); })
+    .then(txt=>{
+      const {data} = rowsToObjects(parseCSV(txt));
+      const units = dcBuild(data);
+      const legend = `<div class="dc-legend">
+        <span><i class="dc-key s"></i> Projected Starter</span>
+        <span><i class="dc-key n"></i> Depth</span>
+        <span><i class="dc-key" style="background:#e6ece8;border:1px solid #b9c6bf"></i> OR = equal on depth chart</span>
+        <span><i class="dc-key" style="background:var(--blue)"></i> Player rating</span>
+      </div>`;
+      const off = dcFormation(DC_LAYOUT.offense.label, DC_LAYOUT.offense.grid, units.offense);
+      const def = dcFormation(DC_LAYOUT.defense.label, DC_LAYOUT.defense.grid, units.defense);
+      let st = '';
+      const spKeys = DC_LAYOUT.special.positions.filter(k=>units.special[k]);
+      if(spKeys.length){
+        st = `<div class="dc-unit"><h3>${esc(DC_LAYOUT.special.label)}</h3><div class="dc-special">`+
+          spKeys.map(k=>dcPos(units.special[k])).join('')+`</div></div>`;
+      }
+      host.innerHTML = legend + off + def + st;
+    })
+    .catch(err=>{
+      dcDrawn = false; // allow a retry on the next tab switch
+      host.innerHTML = `<div class="sched-msg">⚠️ Couldn't load the depth chart (${esc(err.message)}). Make sure the sheet tab is Published to web as CSV.</div>`;
+    });
 }
 function setDashMode(depth){
   ['statGrid','dashControls','tableCard'].forEach(id=>{
