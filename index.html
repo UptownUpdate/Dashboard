@@ -517,9 +517,9 @@ const DC = {
   offense: {
     label:"Offense",
     grid:[
-      "wrL  slot lt   lg   c    rg   rt   te   wrR",
-      ".    .    .    .    qb   .    .    .    .",
-      ".    .    .    .    rb   .    .    .    ."
+      "wrL  slot .    lt   lg   c    rg   rt   .    te   wrR",
+      ".    .    .    .    .    qb   .    .    .    .    .",
+      ".    .    .    .    .    rb   .    .    .    .    ."
     ],
     pos:{
       wrL:["WR",[[5,"Anthony Brown-Stephens","R-SR","5'10\"","175",82,"s"],[8,"Bredell Richardson","R-FR","6'1\"","195",78,""],[16,"Garrett Mmahat","R-SR","6'0\"","196",77,""],[15,"Antwaun Parham","R-FR","6'4\"","206",75,""],[82,"Keyshawn Coleman","FR","6'4\"","195","","f"]]],
@@ -538,7 +538,7 @@ const DC = {
   defense: {
     label:"Defense",
     grid:[
-      "cbL  spear de   dl   .    nt   bandit .    cbR",
+      "cbL  spear .    de   dl   nt   bandit .    cbR",
       ".    .     .    mlb  .    wlb  .      .    .",
       ".    .     ss   .    .    .    fs     .    ."
     ],
@@ -1005,8 +1005,8 @@ function dcPos(arr,key){
 function dcFormation(unit){
   const areas = unit.grid.map(r=>'"'+r.replace(/\s+/g,' ').trim()+'"').join(' ');
   const n = unit.grid[0].trim().split(/\s+/).length;          // columns in this formation
-  const minW = n*104 + (n-1)*9;                               // keeps tracks readable; field scrolls if narrower
-  const style = `grid-template-columns:repeat(${n},minmax(104px,1fr));min-width:${minW}px;grid-template-areas:${areas}`;
+  const minW = n*132 + (n-1)*9;                               // keeps tracks readable; field scrolls if narrower
+  const style = `grid-template-columns:repeat(${n},minmax(132px,1fr));min-width:${minW}px;grid-template-areas:${areas}`;
   const cells = Object.keys(unit.pos).map(k=>dcPos(unit.pos[k],k)).join('');
   return `<div class="dc-unit"><h3>${esc(unit.label)}</h3>`+
     `<div class="dc-hint">← swipe / scroll sideways to see every position →</div>`+
