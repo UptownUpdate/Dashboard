@@ -49,7 +49,8 @@
     box-shadow:0 2px 12px rgba(0,0,0,.15);
   }
   .nav{display:flex;align-items:center;justify-content:space-between;height:64px}
-  .brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:1.15rem;color:#fff;letter-spacing:.3px}
+  .brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:1.15rem;color:#fff;letter-spacing:.3px;cursor:pointer}
+  .brand:hover{text-decoration:none;opacity:.9}
   .brand-logo{height:40px;width:40px;border-radius:50%;background:#fff;object-fit:contain;padding:2px}
   .menu{display:flex;gap:6px;flex-wrap:wrap}
   .menu a{color:#e9f3ee;font-weight:600;font-size:.92rem;padding:8px 12px;border-radius:8px}
@@ -176,7 +177,7 @@
       linear-gradient(160deg,var(--olive-dark),var(--olive-light));
     border:2px solid rgba(255,255,255,.25);
   }
-  .formation{display:grid;grid-template-columns:repeat(7,minmax(118px,1fr));gap:9px;min-width:900px}
+  .formation{display:grid;gap:9px}
   .pos{
     background:rgba(255,255,255,.96);border-radius:11px;padding:8px 8px 7px;
     box-shadow:0 3px 10px rgba(0,0,0,.18);min-width:0;
@@ -295,9 +296,9 @@
 </head>
 <body>
 
-<header>
+<header id="top">
   <div class="wrap nav">
-    <div class="brand"><img src="logo.png" alt="The Uptown Update logo" class="brand-logo"> THE UPTOWN UPDATE</div>
+    <a class="brand" href="#top" aria-label="Back to top"><img src="logo.png" alt="The Uptown Update logo" class="brand-logo"> THE UPTOWN UPDATE</a>
     <nav class="menu">
       <a href="#episodes">Episodes</a>
       <a href="#dashboard">Recruiting Dashboard</a>
@@ -516,10 +517,9 @@ const DC = {
   offense: {
     label:"Offense",
     grid:[
-      ".    wrL  slot .    .    te   wrR",
-      ".    lt   lg   c    rg   rt   .",
-      ".    .    .    qb   .    .    .",
-      ".    .    .    rb   .    .    ."
+      "wrL  slot lt   lg   c    rg   rt   te   wrR",
+      ".    .    .    .    qb   .    .    .    .",
+      ".    .    .    .    rb   .    .    .    ."
     ],
     pos:{
       wrL:["WR",[[5,"Anthony Brown-Stephens","R-SR","5'10\"","175",82,"s"],[8,"Bredell Richardson","R-FR","6'1\"","195",78,""],[16,"Garrett Mmahat","R-SR","6'0\"","196",77,""],[15,"Antwaun Parham","R-FR","6'4\"","206",75,""],[82,"Keyshawn Coleman","FR","6'4\"","195","","f"]]],
@@ -538,10 +538,9 @@ const DC = {
   defense: {
     label:"Defense",
     grid:[
-      ".    de   dl   nt   bandit .    .",
-      ".    .    mlb  .    wlb    .    .",
-      "cbL  .    .    spear .     .    cbR",
-      ".    .    ss   .    fs     .    ."
+      "cbL  spear de   dl   .    nt   bandit .    cbR",
+      ".    .     .    mlb  .    wlb  .      .    .",
+      ".    .     ss   .    .    .    fs     .    ."
     ],
     pos:{
       de:["DE",[[99,"Joshua Lewis","R-FR","6'5\"","275",78,"s"],[51,"Reshad Sterling","R-FR","6'3\"","260",77,""],[10,"Gerrod Henderson","R-SR","6'2\"","250",77,""],[47,"Michael Guruli","R-JR","5'11\"","230","","w"],[90,"Jordyn Crites","FR","6'7\"","260","","f"]]],
@@ -1005,10 +1004,13 @@ function dcPos(arr,key){
 }
 function dcFormation(unit){
   const areas = unit.grid.map(r=>'"'+r.replace(/\s+/g,' ').trim()+'"').join(' ');
+  const n = unit.grid[0].trim().split(/\s+/).length;          // columns in this formation
+  const minW = n*104 + (n-1)*9;                               // keeps tracks readable; field scrolls if narrower
+  const style = `grid-template-columns:repeat(${n},minmax(104px,1fr));min-width:${minW}px;grid-template-areas:${areas}`;
   const cells = Object.keys(unit.pos).map(k=>dcPos(unit.pos[k],k)).join('');
   return `<div class="dc-unit"><h3>${esc(unit.label)}</h3>`+
     `<div class="dc-hint">← swipe / scroll sideways to see every position →</div>`+
-    `<div class="field"><div class="formation" style='grid-template-areas:${areas}'>${cells}</div></div></div>`;
+    `<div class="field"><div class="formation" style='${style}'>${cells}</div></div></div>`;
 }
 let dcDrawn = false;
 function renderDepthChart(){
