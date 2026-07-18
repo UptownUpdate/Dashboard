@@ -273,6 +273,17 @@
   .news-item .byline{font-size:.8rem;color:var(--muted);margin-top:8px}
   .news-item .readmore{display:inline-block;margin-top:10px;color:var(--blue-dark);font-weight:700;font-size:.85rem}
   .news-thumb{width:100%;height:170px;object-fit:cover;border-radius:10px;margin-bottom:12px}
+  .news-more-head{font-size:.78rem;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);font-weight:800;margin:22px 0 10px}
+  .news-scroll{max-height:340px;overflow-y:auto;border:1px solid var(--line);border-radius:14px;background:var(--card);box-shadow:var(--shadow)}
+  .news-row{display:flex;gap:12px;align-items:baseline;padding:12px 16px;border-bottom:1px solid var(--line)}
+  .news-row:last-child{border-bottom:none}
+  .news-row.clickable{cursor:pointer;transition:background .15s}
+  .news-row.clickable:hover{background:#f2f7f4}
+  .nr-date{font-size:.7rem;color:var(--blue-dark);font-weight:700;text-transform:uppercase;letter-spacing:.4px;white-space:nowrap;min-width:92px;flex-shrink:0}
+  .nr-title{font-weight:700;font-size:.94rem;color:var(--ink);line-height:1.3}
+  .news-row.clickable:hover .nr-title{color:var(--blue-dark)}
+  .news-scroll::-webkit-scrollbar{width:8px}
+  .news-scroll::-webkit-scrollbar-thumb{background:#cfd6d2;border-radius:8px}
   /* Article reader overlay */
   .reader-ov{position:fixed;inset:0;background:rgba(10,26,20,.55);backdrop-filter:blur(3px);z-index:1000;display:none;align-items:flex-start;justify-content:center;overflow-y:auto;padding:40px 16px}
   .reader-ov.open{display:flex}
@@ -496,6 +507,9 @@
             <li><a href="https://tulanegreenwave.com/sports/football/schedule" target="_blank" rel="noopener">Full Schedule</a></li>
             <li><a href="https://tulanegreenwave.com/sports/football/roster" target="_blank" rel="noopener">Team Roster</a></li>
             <li><a href="https://theamerican.org/" target="_blank" rel="noopener">The American Conference</a></li>
+            <li><a href="https://www.fearthewavecollective.com/" target="_blank" rel="noopener">Fear the Wave Collective</a></li>
+            <li><a href="https://tulanegreenwave.evenue.net/www/ev_tulane/ss/ev/DonationEntry?donationCd=GWTF&amp;siteId=ev_tulane&amp;locale=en_US&amp;linkID=tulane&amp;orchBypass=1" target="_blank" rel="noopener">Green Wave Talent Fund</a></li>
+            <li><a href="https://rollwave.win/content-type/podcasts/" target="_blank" rel="noopener">RollWave.win</a></li>
             <li><a href="#dashboard">Recruiting Board</a></li>
           </ul>
         </div>
@@ -777,11 +791,16 @@ document.getElementById('readerClose').addEventListener('click', closeArticle);
 ovEl.addEventListener('click', e=>{ if(e.target===ovEl) closeArticle(); });
 document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeArticle(); });
 
+/* Newest first: sort by parsed date desc; unparseable dates keep their sheet order (stable). */
+function newsDate(s){ const t=Date.parse(s); return isNaN(t)?0:t; }
 function renderNews(list){
+  list = list.slice().sort((a,b)=> newsDate(b.date)-newsDate(a.date));
   ARTICLES = list;
   const el = document.getElementById('newsList');
   if(!list.length){ el.innerHTML = '<p style="color:var(--muted)">No stories yet — check back soon.</p>'; return; }
-  el.innerHTML = list.map((n,i)=>{
+
+  // Featured (most recent) — full card
+  const feature = (n,i)=>{
     const hasBody = n.body && n.body.trim().length;
     return `<div class="news-item ${hasBody?'clickable':''}" ${hasBody?`data-i="${i}"`:''}>
       ${n.image ? `<img class="news-thumb" src="${esc(n.image)}" alt="">` : ''}
@@ -791,8 +810,24 @@ function renderNews(list){
       <p>${esc(excerpt(n.body, 180))}</p>
       ${hasBody ? '<span class="readmore">Read full story →</span>' : ''}
     </div>`;
-  }).join('');
-  el.querySelectorAll('.news-item.clickable').forEach(c=>
+  };
+  // Older stories — compact scrollable rows
+  const row = (n,i)=>{
+    const hasBody = n.body && n.body.trim().length;
+    return `<div class="news-row ${hasBody?'clickable':''}" ${hasBody?`data-i="${i}"`:''}>
+      <span class="nr-date">${esc(n.date||'')}</span>
+      <span class="nr-title">${esc(n.headline||'Untitled')}</span>
+    </div>`;
+  };
+
+  const rest = list.slice(1);
+  el.innerHTML = feature(list[0],0) +
+    (rest.length
+      ? `<div class="news-more-head">More stories</div><div class="news-scroll">`+
+        rest.map((n,k)=>row(n,k+1)).join('')+`</div>`
+      : '');
+
+  el.querySelectorAll('[data-i]').forEach(c=>
     c.addEventListener('click', ()=>openArticle(+c.dataset.i)));
 }
 
