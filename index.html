@@ -199,6 +199,9 @@
   .game.upcoming .g-tag{background:#e2eefb;color:var(--blue-dark)}
   .game .g-result .g-time{font-size:.85rem;color:var(--muted);font-weight:700}
   .sched-msg{text-align:center;color:var(--muted);padding:30px;font-weight:600}
+  .stat .sub{font-size:.78rem;color:var(--muted);font-weight:700;margin-top:6px;line-height:1.3}
+  .game .g-result .g-box{display:inline-block;font-size:.72rem;font-weight:800;margin-top:4px;color:var(--blue-dark)}
+  .game .g-result .g-box:hover{text-decoration:underline}
   @media(max-width:520px){
     .game{grid-template-columns:52px 1fr auto;gap:10px;padding:12px}
     .game .g-main .g-opp{font-size:.95rem}
@@ -1225,17 +1228,21 @@ renderDashTabs();
     const completed = !!F(g,'completed','completed');
     const neutral   = !!F(g,'neutralSite','neutral_site');
     const start = F(g,'startDate','start_date');
+    const tbd   = !!F(g,'startTimeTBD','start_time_tbd');
     const week  = F(g,'week','week');
+    const gid   = F(g,'id','id');
     const loc = neutral ? 'Neutral site' : (isHome ? 'Home' : 'Away');
     const prefix = (neutral || isHome) ? 'vs' : 'at';
     const dd = fmtDate(start);
+    const timeDisp = tbd ? 'TBD' : dd.tm;   // only show a kickoff time when CFBD has confirmed it
     let cls='upcoming', resultHTML;
     if(completed && us!=null && them!=null){
       const win = Number(us) > Number(them);
       cls = win ? 'win' : 'loss';
-      resultHTML = `<div class="g-tag">${win?'Win':'Loss'}</div><div class="g-score">${us}\u2013${them}</div>`;
+      const box = gid ? `<a class="g-box" href="https://www.espn.com/college-football/game/_/gameId/${encodeURIComponent(gid)}" target="_blank" rel="noopener">Box score \u2197</a>` : '';
+      resultHTML = `<div class="g-tag">${win?'Win':'Loss'}</div><div class="g-score">${us}\u2013${them}</div>${box}`;
     } else {
-      resultHTML = `<div class="g-tag">Upcoming</div><div class="g-time">${esc(dd.tm)}</div>`;
+      resultHTML = `<div class="g-tag">Upcoming</div><div class="g-time">${esc(timeDisp)}</div>`;
     }
     return { cls, us, them, completed, html:`
       <div class="game ${cls}">
@@ -1251,30 +1258,111 @@ renderDashTabs();
     $('schedRecord').innerHTML = (w+l)>0 ? `${w}\u2013${l} <span>on the season</span>` : '';
   }
 
-  function statCard(num,lbl,blue){
-    return `<div class="stat${blue?' blue':''}"><div class="num">${esc(num)}</div><div class="lbl">${esc(lbl)}</div></div>`;
+  function statCard(num,lbl,sub,blue){
+    return `<div class="stat${blue?' blue':''}"><div class="num">${esc(num)}</div>`+
+      `<div class="lbl">${esc(lbl)}</div>${sub?`<div class="sub">${esc(sub)}</div>`:''}</div>`;
   }
 
-  async function renderStats(year){
+  // --- National / conference scoring ranks (computed from every FBS team's games) ---
+  const rankCache = {};
+  async function computeRanks(year){
+    if(rankCache[year]!==undefined) return rankCache[year];
     try{
-      const stats = await api(`/stats/season?year=${year}&team=${encodeURIComponent(TEAM)}`);
-      const map = {};
-      (stats||[]).forEach(s=>{ map[F(s,'statName','stat_name')] = F(s,'statValue','stat_value'); });
-      const pick = [
-        ['totalYards','Total Yards',false],
-        ['rushingYards','Rushing Yards',true],
-        ['netPassingYards','Passing Yards',false],
-        ['firstDowns','First Downs',true],
-        ['turnovers','Turnovers Lost',false],
-        ['sacks','Sacks',true]
-      ];
-      const cards = pick.filter(p=>map[p[0]]!=null).map(p=>{
-        const v = map[p[0]];
-        const disp = (typeof v==='number' || /^\d+$/.test(v)) ? Number(v).toLocaleString() : v;
-        return statCard(disp, p[1], p[2]);
+      const [allGames, teams] = await Promise.all([
+        api(`/games?year=${year}&seasonType=regular`),
+        api(`/teams/fbs?year=${year}`)
+      ]);
+      const confOf = {}; const fbs = new Set();
+      (teams||[]).forEach(t=>{ const s=F(t,'school','school'); fbs.add(s); confOf[s]=F(t,'conference','conference'); });
+      const agg = {};
+      (allGames||[]).forEach(g=>{
+        if(!F(g,'completed','completed')) return;
+        const h=F(g,'homeTeam','home_team'), a=F(g,'awayTeam','away_team');
+        const hp=F(g,'homePoints','home_points'), ap=F(g,'awayPoints','away_points');
+        if(hp==null||ap==null) return;
+        [[h,Number(hp),Number(ap)],[a,Number(ap),Number(hp)]].forEach(([tm,pf,pa])=>{
+          if(!agg[tm]) agg[tm]={pf:0,pa:0,g:0};
+          agg[tm].pf+=pf; agg[tm].pa+=pa; agg[tm].g++;
+        });
       });
-      $('schedStats').innerHTML = cards.join('');
-    }catch(e){ $('schedStats').innerHTML=''; }
+      const rows=[...fbs].filter(t=>agg[t]&&agg[t].g>0)
+        .map(t=>({team:t,conf:confOf[t],ppg:agg[t].pf/agg[t].g,papg:agg[t].pa/agg[t].g}));
+      const off=[...rows].sort((a,b)=>b.ppg-a.ppg);   // most points scored first
+      const def=[...rows].sort((a,b)=>a.papg-b.papg); // fewest points allowed first
+      const result={off,def,conf:confOf[TEAM]};
+      rankCache[year]=result; return result;
+    }catch(e){ rankCache[year]=null; return null; }
+  }
+  function rankOf(sorted, conf){
+    if(!sorted) return null;
+    const natl = sorted.findIndex(r=>r.team===TEAM);
+    if(natl<0) return null;
+    const confRank = sorted.filter(r=>r.conf===conf).findIndex(r=>r.team===TEAM);
+    return { natl: natl+1, conf: confRank>=0?confRank+1:null };
+  }
+  function rankSub(rk){
+    if(!rk) return '';
+    return rk.conf ? `#${rk.natl} Natl \u00b7 #${rk.conf} Conf` : `#${rk.natl} Natl`;
+  }
+
+  // --- Individual season leaders ---
+  async function getLeaders(year){
+    try{
+      const rows = await api(`/stats/player/season?year=${year}&team=${encodeURIComponent(TEAM)}`);
+      const best=(cat,type)=>{
+        let top=null;
+        (rows||[]).forEach(r=>{
+          if(F(r,'category','category')!==cat) return;
+          if(F(r,'statType','stat_type')!==type) return;
+          const v=Number(F(r,'stat','stat'));
+          if(isNaN(v)) return;
+          if(!top || v>top.v) top={ name:F(r,'player','player'), v };
+        });
+        return top;
+      };
+      return {
+        pass: best('passing','YDS'),
+        rush: best('rushing','YDS'),
+        recv: best('receiving','YDS'),
+        tackles: best('defensive','TOT'),
+        sacks: best('defensive','SACKS'),
+        ints: best('interceptions','INT')
+      };
+    }catch(e){ return null; }
+  }
+
+  async function renderStats(year, teamGames){
+    $('schedStats').innerHTML = `<div class="sched-msg">Crunching top stats\u2026</div>`;
+    // Scoring offense/defense from Tulane's own completed games
+    let pf=0,pa=0,gp=0;
+    (teamGames||[]).forEach(g=>{
+      if(!F(g,'completed','completed')) return;
+      const isHome = F(g,'homeTeam','home_team')===TEAM;
+      const hp=F(g,'homePoints','home_points'), ap=F(g,'awayPoints','away_points');
+      if(hp==null||ap==null) return;
+      pf+=Number(isHome?hp:ap); pa+=Number(isHome?ap:hp); gp++;
+    });
+    const ppg = gp? pf/gp : null;
+    const papg= gp? pa/gp : null;
+
+    const [ranks, ld] = await Promise.all([computeRanks(year), getLeaders(year)]);
+    const rkO = ranks ? rankOf(ranks.off, ranks.conf) : null;
+    const rkD = ranks ? rankOf(ranks.def, ranks.conf) : null;
+
+    const cards=[];
+    if(ppg!=null)  cards.push(statCard(ppg.toFixed(1),  'Points / Game',         rankSub(rkO), false));
+    if(papg!=null) cards.push(statCard(papg.toFixed(1), 'Points Allowed / Game', rankSub(rkD), true));
+    const L=(o,lbl,blue)=> o ? statCard(Number(o.v).toLocaleString(), lbl, o.name, blue) : '';
+    if(ld){
+      cards.push(L(ld.pass,   'Passing Yards',   false));
+      cards.push(L(ld.rush,   'Rushing Yards',   true));
+      cards.push(L(ld.recv,   'Receiving Yards', false));
+      cards.push(L(ld.tackles,'Tackles',         true));
+      cards.push(L(ld.sacks,  'Sacks',           false));
+      cards.push(L(ld.ints,   'Interceptions',   true));
+    }
+    const html = cards.filter(Boolean).join('');
+    $('schedStats').innerHTML = html || `<div class="sched-msg">Season stats will appear once games are played.</div>`;
   }
 
   async function load(year){
@@ -1291,7 +1379,7 @@ renderDashTabs();
       const views = games.map(gameView);
       $('schedList').innerHTML = views.map(v=>v.html).join('');
       renderRecord(views);
-      renderStats(year);
+      renderStats(year, games);
       $('schedNote').innerHTML = `Data from <a href="https://collegefootballdata.com" target="_blank" rel="noopener">CollegeFootballData</a> \u00b7 ${year} regular season \u00b7 refreshes on load.`;
     }catch(e){
       $('schedList').innerHTML = `<div class="sched-msg">Couldn\u2019t load the schedule right now (${esc(e.message)}). Try refreshing the page.</div>`;
