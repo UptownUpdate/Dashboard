@@ -166,6 +166,44 @@
   .dash-note{font-size:.82rem;color:var(--muted);margin-top:14px}
   .dash-note code{background:#e6ece8;padding:2px 6px;border-radius:5px;font-size:.82rem}
 
+  /* Schedule & Scores */
+  .sched-section{background:#eef4f1}
+  .sched-toolbar{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:22px}
+  .sched-years{display:flex;gap:8px;flex-wrap:wrap}
+  .sched-years button{background:var(--card);border:1px solid var(--line);color:var(--ink);font-weight:700;
+    font-size:.9rem;padding:8px 16px;border-radius:20px;cursor:pointer}
+  .sched-years button:hover{border-color:var(--olive-light)}
+  .sched-years button.active{background:var(--olive);color:#fff;border-color:var(--olive)}
+  .sched-record{font-weight:900;font-size:1.15rem;color:var(--olive)}
+  .sched-record span{color:var(--muted);font-weight:600;font-size:.85rem;margin-left:6px}
+  .sched-list{display:grid;gap:12px}
+  .game{display:grid;grid-template-columns:64px 1fr auto;align-items:center;gap:16px;
+    background:var(--card);border:1px solid var(--line);border-left:5px solid var(--line);
+    border-radius:12px;padding:14px 18px;box-shadow:var(--shadow)}
+  .game.win{border-left-color:var(--olive)}
+  .game.loss{border-left-color:#c0392b}
+  .game.upcoming{border-left-color:var(--blue)}
+  .game .g-week{text-align:center}
+  .game .g-week .wk{font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;font-weight:700}
+  .game .g-week .dt{font-size:.95rem;font-weight:800;color:var(--ink)}
+  .game .g-main .g-opp{font-size:1.05rem;font-weight:800;color:var(--ink)}
+  .game .g-main .g-loc{font-size:.8rem;color:var(--muted);margin-top:2px}
+  .game .g-result{text-align:right;white-space:nowrap}
+  .game .g-result .g-score{font-size:1.15rem;font-weight:900}
+  .game.win .g-result .g-score{color:var(--olive)}
+  .game.loss .g-result .g-score{color:#c0392b}
+  .game .g-result .g-tag{display:inline-block;font-size:.7rem;font-weight:800;text-transform:uppercase;
+    letter-spacing:.5px;padding:2px 8px;border-radius:10px;margin-bottom:3px}
+  .game.win .g-tag{background:#dff3e8;color:var(--olive-dark)}
+  .game.loss .g-tag{background:#fbe4e0;color:#c0392b}
+  .game.upcoming .g-tag{background:#e2eefb;color:var(--blue-dark)}
+  .game .g-result .g-time{font-size:.85rem;color:var(--muted);font-weight:700}
+  .sched-msg{text-align:center;color:var(--muted);padding:30px;font-weight:600}
+  @media(max-width:520px){
+    .game{grid-template-columns:52px 1fr auto;gap:10px;padding:12px}
+    .game .g-main .g-opp{font-size:.95rem}
+  }
+
   /* Depth chart (field formation) */
   .dc-legend{display:flex;flex-wrap:wrap;gap:14px;margin:0 0 20px;font-size:.8rem;font-weight:600;color:var(--ink)}
   .dc-legend span{display:inline-flex;align-items:center;gap:7px}
@@ -309,6 +347,7 @@
     <a class="brand" href="#top" aria-label="Back to top"><img src="logo.png" alt="The Uptown Update logo" class="brand-logo"> THE UPTOWN UPDATE</a>
     <nav class="menu">
       <a href="#episodes">Episodes</a>
+      <a href="#schedule">Schedule</a>
       <a href="#dashboard">Recruiting Dashboard</a>
       <a href="#news">News &amp; Links</a>
       <a href="#polls">Fan Polls</a>
@@ -406,6 +445,28 @@
     <div id="depthChart" style="display:none"></div>
 
     <p class="dash-note" id="dashNote"></p>
+  </div>
+</section>
+
+<!-- SCHEDULE & SCORES (CollegeFootballData API) -->
+<section id="schedule" class="sched-section">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="kicker">Live from the Field</div>
+      <h2>Schedule &amp; Scores</h2>
+      <p>Every Green Wave game, updated live — scores, results, and season stats pulled straight from CollegeFootballData.</p>
+    </div>
+
+    <div class="sched-toolbar">
+      <div class="sched-years" id="schedYears"></div>
+      <div class="sched-record" id="schedRecord"></div>
+    </div>
+
+    <div class="stat-grid" id="schedStats"></div>
+
+    <div id="schedList" class="sched-list"></div>
+
+    <p class="dash-note" id="schedNote"></p>
   </div>
 </section>
 
@@ -1108,6 +1169,137 @@ function renderDashTabs(){
   loadTab(0);
 }
 renderDashTabs();
+</script>
+
+<!-- SCHEDULE & SCORES logic (CollegeFootballData API) -->
+<script>
+(function(){
+  const CFBD_KEY = "32wTxzo4ZZm8puQqnzeyB+jLSK3GcXM4kIWVFNQrinxxZy7Hl5tBxEtFuVbZbKYy";
+  const TEAM = "Tulane";
+  const API  = "https://api.collegefootballdata.com";
+
+  const now = new Date();
+  // In-season (Aug–Dec) the current season is this year; in the offseason the most
+  // recently completed season is last year. Show the upcoming season as a clickable option too.
+  const baseYear = now.getMonth() >= 7 ? now.getFullYear() : now.getFullYear() - 1;
+  const DEFAULT_SEASON = baseYear;
+  const YEARS = now.getMonth() >= 7
+    ? [baseYear, baseYear - 1, baseYear - 2]
+    : [baseYear + 1, baseYear, baseYear - 1];
+
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  // Tolerant of both CFBD response styles (camelCase and snake_case)
+  const F = (o,cc,sc) => (o && o[cc]!==undefined ? o[cc] : (o?o[sc]:undefined));
+
+  async function api(path){
+    const res = await fetch(API+path, { headers:{ Authorization:'Bearer '+CFBD_KEY, Accept:'application/json' } });
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    return res.json();
+  }
+
+  function fmtDate(iso){
+    if(!iso) return {dt:'TBD', tm:'TBD'};
+    const d = new Date(iso);
+    if(isNaN(d.getTime())) return {dt:'TBD', tm:'TBD'};
+    return {
+      dt: d.toLocaleDateString('en-US',{month:'short',day:'numeric'}),
+      tm: d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})
+    };
+  }
+
+  function renderYears(active){
+    $('schedYears').innerHTML = YEARS.map(y=>`<button data-y="${y}" class="${y===active?'active':''}">${y}</button>`).join('');
+    $('schedYears').querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>load(+b.dataset.y)));
+  }
+
+  function gameView(g){
+    const home = F(g,'homeTeam','home_team');
+    const away = F(g,'awayTeam','away_team');
+    const hp = F(g,'homePoints','home_points');
+    const ap = F(g,'awayPoints','away_points');
+    const isHome = home === TEAM;
+    const opp = isHome ? away : home;
+    const us  = isHome ? hp : ap;
+    const them= isHome ? ap : hp;
+    const completed = !!F(g,'completed','completed');
+    const neutral   = !!F(g,'neutralSite','neutral_site');
+    const start = F(g,'startDate','start_date');
+    const week  = F(g,'week','week');
+    const loc = neutral ? 'Neutral site' : (isHome ? 'Home' : 'Away');
+    const prefix = (neutral || isHome) ? 'vs' : 'at';
+    const dd = fmtDate(start);
+    let cls='upcoming', resultHTML;
+    if(completed && us!=null && them!=null){
+      const win = Number(us) > Number(them);
+      cls = win ? 'win' : 'loss';
+      resultHTML = `<div class="g-tag">${win?'Win':'Loss'}</div><div class="g-score">${us}\u2013${them}</div>`;
+    } else {
+      resultHTML = `<div class="g-tag">Upcoming</div><div class="g-time">${esc(dd.tm)}</div>`;
+    }
+    return { cls, us, them, completed, html:`
+      <div class="game ${cls}">
+        <div class="g-week"><div class="wk">Wk ${esc(week||'-')}</div><div class="dt">${esc(dd.dt)}</div></div>
+        <div class="g-main"><div class="g-opp">${esc(prefix)} ${esc(opp)}</div><div class="g-loc">${esc(loc)}</div></div>
+        <div class="g-result">${resultHTML}</div>
+      </div>`};
+  }
+
+  function renderRecord(views){
+    let w=0,l=0;
+    views.forEach(v=>{ if(v.completed && v.us!=null){ v.cls==='win'?w++:(v.cls==='loss'&&l++); }});
+    $('schedRecord').innerHTML = (w+l)>0 ? `${w}\u2013${l} <span>on the season</span>` : '';
+  }
+
+  function statCard(num,lbl,blue){
+    return `<div class="stat${blue?' blue':''}"><div class="num">${esc(num)}</div><div class="lbl">${esc(lbl)}</div></div>`;
+  }
+
+  async function renderStats(year){
+    try{
+      const stats = await api(`/stats/season?year=${year}&team=${encodeURIComponent(TEAM)}`);
+      const map = {};
+      (stats||[]).forEach(s=>{ map[F(s,'statName','stat_name')] = F(s,'statValue','stat_value'); });
+      const pick = [
+        ['totalYards','Total Yards',false],
+        ['rushingYards','Rushing Yards',true],
+        ['netPassingYards','Passing Yards',false],
+        ['firstDowns','First Downs',true],
+        ['turnovers','Turnovers Lost',false],
+        ['sacks','Sacks',true]
+      ];
+      const cards = pick.filter(p=>map[p[0]]!=null).map(p=>{
+        const v = map[p[0]];
+        const disp = (typeof v==='number' || /^\d+$/.test(v)) ? Number(v).toLocaleString() : v;
+        return statCard(disp, p[1], p[2]);
+      });
+      $('schedStats').innerHTML = cards.join('');
+    }catch(e){ $('schedStats').innerHTML=''; }
+  }
+
+  async function load(year){
+    renderYears(year);
+    $('schedList').innerHTML = `<div class="sched-msg">Loading ${year} schedule\u2026</div>`;
+    $('schedStats').innerHTML=''; $('schedRecord').innerHTML=''; $('schedNote').innerHTML='';
+    try{
+      const games = await api(`/games?year=${year}&team=${encodeURIComponent(TEAM)}&seasonType=regular`);
+      if(!Array.isArray(games) || !games.length){
+        $('schedList').innerHTML = `<div class="sched-msg">No ${year} games posted yet \u2014 check back closer to kickoff.</div>`;
+        return;
+      }
+      games.sort((a,b)=> new Date(F(a,'startDate','start_date')) - new Date(F(b,'startDate','start_date')));
+      const views = games.map(gameView);
+      $('schedList').innerHTML = views.map(v=>v.html).join('');
+      renderRecord(views);
+      renderStats(year);
+      $('schedNote').innerHTML = `Data from <a href="https://collegefootballdata.com" target="_blank" rel="noopener">CollegeFootballData</a> \u00b7 ${year} regular season \u00b7 refreshes on load.`;
+    }catch(e){
+      $('schedList').innerHTML = `<div class="sched-msg">Couldn\u2019t load the schedule right now (${esc(e.message)}). Try refreshing the page.</div>`;
+    }
+  }
+
+  load(DEFAULT_SEASON);
+})();
 </script>
 </body>
 </html>
