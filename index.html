@@ -11,21 +11,56 @@
 </script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Uptown Update Dashboard</title>
-<meta name="description" content="The Uptown Update — your home for Tulane Green Wave football: episodes, recruiting dashboard, and news.">
+<title>The Uptown Update — Tulane Green Wave Football Podcast &amp; Dashboard</title>
+<meta name="description" content="The Uptown Update — your home for Tulane Green Wave football: podcast episodes, live schedule &amp; scores, recruiting board, depth chart, and news. #RollWave">
+<link rel="canonical" href="https://uptownupdate.github.io/Dashboard/">
 
 <!-- Browser tab icon -->
 <link rel="icon" type="image/png" href="logo.png">
 <link rel="apple-touch-icon" href="logo.png">
 
-<!-- Social share preview (iMessage, Facebook, LinkedIn, etc.) -->
-<meta property="og:title" content="Uptown Update Dashboard">
-<meta property="og:description" content="Tulane Green Wave football — episodes, recruiting dashboard, and news.">
-<meta property="og:image" content="logo.png">
+<!-- Social share preview (iMessage, Facebook, LinkedIn, X, etc.) -->
+<meta property="og:site_name" content="The Uptown Update">
+<meta property="og:title" content="The Uptown Update — Tulane Green Wave Football">
+<meta property="og:description" content="Tulane Green Wave football — podcast episodes, live scores, recruiting board, depth chart, and news. #RollWave">
+<meta property="og:image" content="https://uptownupdate.github.io/Dashboard/logo.png">
+<meta property="og:url" content="https://uptownupdate.github.io/Dashboard/">
 <meta property="og:type" content="website">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Uptown Update Dashboard">
-<meta name="twitter:image" content="logo.png">
+<meta name="twitter:site" content="@TUptownUpdate">
+<meta name="twitter:title" content="The Uptown Update — Tulane Green Wave Football">
+<meta name="twitter:description" content="Tulane Green Wave football — podcast episodes, live scores, recruiting board, depth chart, and news. #RollWave">
+<meta name="twitter:image" content="https://uptownupdate.github.io/Dashboard/logo.png">
+
+<!-- Structured data: helps Google understand the site & podcast -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebSite",
+      "@id": "https://uptownupdate.github.io/Dashboard/#website",
+      "url": "https://uptownupdate.github.io/Dashboard/",
+      "name": "The Uptown Update",
+      "description": "Tulane Green Wave football podcast, live scores, recruiting board, depth chart, and news."
+    },
+    {
+      "@type": "PodcastSeries",
+      "name": "The Uptown Update",
+      "description": "Weekly Tulane Green Wave football podcast bringing y'all the updates and hottest takes.",
+      "url": "https://uptownupdate.github.io/Dashboard/",
+      "image": "https://uptownupdate.github.io/Dashboard/logo.png",
+      "sameAs": [
+        "https://open.spotify.com/show/3sjlodzt2uGjw4nfTr88hc",
+        "https://podcasts.apple.com/us/podcast/the-uptown-update/id1584718815",
+        "https://soundcloud.com/the-uptown-update",
+        "https://x.com/TUptownUpdate",
+        "https://www.instagram.com/theuptownupdate/"
+      ]
+    }
+  ]
+}
+</script>
 <style>
   :root{
     --olive:#006747;        /* Tulane green/olive */
@@ -556,8 +591,33 @@
   </div>
 </section>
 
-<script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
-<script>(function(doc, id){var scripts=doc.getElementsByTagName("script")[0]; if(!doc.getElementById(id)){var script=doc.createElement("script"); script.async=1; script.id=id; script.src="https://cdn.jotfor.ms/s/umd/latest/for-report-embed.js"; scripts.parentNode.insertBefore(script, scripts);}})(document, "jotform-async");</script>
+<script>
+/* Lazy-load heavy third-party embeds only once they scroll near the viewport,
+   so they don't block the initial page load. */
+(function(){
+  function loadScript(src, id){
+    if(id && document.getElementById(id)) return;
+    var s=document.createElement('script'); s.async=true; s.src=src; s.charset='utf-8';
+    if(id) s.id=id; document.body.appendChild(s);
+  }
+  function whenVisible(el, cb){
+    if(!el) return;
+    if(!('IntersectionObserver' in window)){ cb(); return; }   // old browsers: just load
+    var io=new IntersectionObserver(function(ents){
+      ents.forEach(function(e){ if(e.isIntersecting){ cb(); io.disconnect(); } });
+    }, { rootMargin:'400px' });                                 // start loading a bit early
+    io.observe(el);
+  }
+  // X (Twitter) timeline — loads widgets.js, which then renders any .twitter-timeline
+  whenVisible(document.querySelector('.x-card'), function(){
+    loadScript('https://platform.twitter.com/widgets.js','twitter-wjs');
+  });
+  // Jotform interactive poll-results report
+  whenVisible(document.getElementById('polls'), function(){
+    loadScript('https://cdn.jotfor.ms/s/umd/latest/for-report-embed.js','jotform-async');
+  });
+})();
+</script>
 
 <!-- ARTICLE READER -->
 <div class="reader-ov" id="readerOv">
@@ -585,6 +645,19 @@
 </footer>
 
 <script>
+/* GA4 custom-event helper — safe no-op if analytics is blocked/absent */
+function track(name, params){ try{ if(typeof gtag==='function') gtag('event', name, params||{}); }catch(e){} }
+
+/* Track any click on an outbound (external) link — covers Helpful Links,
+   subscribe buttons, footer social, and the X follow link. */
+document.addEventListener('click', function(e){
+  var a = e.target.closest('a[href]'); if(!a) return;
+  var href = a.getAttribute('href') || '';
+  if(/^https?:\/\//i.test(href) && a.hostname && a.hostname !== location.hostname){
+    track('outbound_click', { link_url: href, link_domain: a.hostname });
+  }
+});
+
 /* ============================================================
    THE UPTOWN UPDATE — site config
    ============================================================ */
@@ -739,10 +812,21 @@ document.querySelectorAll('#platToggle button').forEach(b=>{
     platform = b.dataset.plat;
     document.querySelectorAll('#platToggle button').forEach(x=>x.classList.toggle('active', x===b));
     renderEpisodes();
+    track('select_platform', { method: platform });
   });
 });
 document.querySelector('#platToggle button[data-plat="spotify"]').classList.add('active');
 renderEpisodes();
+
+/* GA4: episode + "see all" clicks (delegated — epList re-renders on platform switch) */
+document.getElementById('epList').addEventListener('click', function(e){
+  var a = e.target.closest('.ep-btn'); if(!a) return;
+  var t = a.querySelector('.ep-t');
+  track('select_episode', { item_name: t ? t.textContent.trim() : '', method: platform });
+});
+document.getElementById('allEpBtn').addEventListener('click', function(){
+  track('see_all_episodes', { method: platform });
+});
 
 /* ---------- News ---------- */
 /* Turn a spreadsheet/body string into safe HTML: paragraphs on blank lines,
@@ -782,9 +866,10 @@ function openArticle(i){
   document.getElementById('readerTitle').textContent = a.headline || 'Untitled';
   document.getElementById('readerBy').textContent = a.author ? 'By '+a.author : '';
   document.getElementById('readerHero').innerHTML = a.image
-    ? `<img class="r-hero" src="${esc(a.image)}" alt="">` : '';
+    ? `<img class="r-hero" src="${esc(a.image)}" alt="" loading="lazy" decoding="async">` : '';
   document.getElementById('readerBody').innerHTML = mdToHtml(a.body) || '<p>No content yet.</p>';
   ovEl.classList.add('open'); document.body.style.overflow='hidden';
+  track('view_article', { item_name: a.headline || 'Untitled' });
 }
 function closeArticle(){ ovEl.classList.remove('open'); document.body.style.overflow=''; }
 document.getElementById('readerClose').addEventListener('click', closeArticle);
@@ -803,7 +888,7 @@ function renderNews(list){
   const feature = (n,i)=>{
     const hasBody = n.body && n.body.trim().length;
     return `<div class="news-item ${hasBody?'clickable':''}" ${hasBody?`data-i="${i}"`:''}>
-      ${n.image ? `<img class="news-thumb" src="${esc(n.image)}" alt="">` : ''}
+      ${n.image ? `<img class="news-thumb" src="${esc(n.image)}" alt="" loading="lazy" decoding="async">` : ''}
       <div class="date">${esc(n.date||'')}</div>
       <h3>${esc(n.headline||'Untitled')}</h3>
       ${n.author ? `<div class="byline">By ${esc(n.author)}</div>` : ''}
