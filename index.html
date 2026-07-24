@@ -413,7 +413,7 @@
   <div class="wrap nav">
     <a class="brand" href="#top" aria-label="Back to top"><img src="logo.png" alt="The Uptown Update logo" class="brand-logo"> THE UPTOWN UPDATE</a>
     <nav class="menu">
-      <a href="#watch">Watch Live</a>
+      <a href="#watch" id="navWatch" style="display:none">Watch Live</a>
       <a href="#episodes">Episodes</a>
       <a href="#schedule">Schedule</a>
       <a href="#dashboard">Recruiting Dashboard</a>
@@ -437,8 +437,8 @@
   </div>
 </div>
 
-<!-- WATCH LIVE -->
-<section id="watch" class="watch-section">
+<!-- WATCH LIVE (hidden until a stream link is set in LIVE_STREAM) -->
+<section id="watch" class="watch-section" style="display:none">
   <div class="wrap">
     <div class="section-head" style="text-align:center">
       <div class="kicker">Live on YouTube</div>
@@ -907,9 +907,15 @@ function ytId(u){
   return m ? m[1] : '';
 }
 function renderLive(){
-  const wrap = document.getElementById('liveWrap'); if(!wrap) return;
+  const wrap = document.getElementById('liveWrap');
+  const section = document.getElementById('watch');
+  const nav = document.getElementById('navWatch');
+  if(!wrap || !section) return;
   const id = ytId(LIVE_STREAM);
   if(id){
+    // Live: reveal the section + nav link and embed the player
+    section.style.display = '';
+    if(nav) nav.style.display = '';
     wrap.innerHTML =
       '<div class="live-frame"><iframe loading="lazy" '+
       'src="https://www.youtube-nocookie.com/embed/'+id+'?rel=0" '+
@@ -918,13 +924,10 @@ function renderLive(){
       'referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe></div>';
     track('live_stream_view', { video_id: id });
   } else {
-    wrap.innerHTML =
-      '<div class="live-off">'+
-      '<span class="live-badge"><i></i> Offline</span>'+
-      '<h3>We go live on game days</h3>'+
-      '<p>Subscribe on YouTube so you never miss a livestream — new episodes drop weekly. Roll Wave.</p>'+
-      '<a class="btn-yt" href="'+YT_CHANNEL+'?sub_confirmation=1" target="_blank" rel="noopener">▶ Subscribe on YouTube</a>'+
-      '</div>';
+    // No stream set: hide the whole section and its nav link
+    section.style.display = 'none';
+    if(nav) nav.style.display = 'none';
+    wrap.innerHTML = '';
   }
 }
 renderLive();
