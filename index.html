@@ -533,7 +533,7 @@
     <div class="section-head">
       <div class="kicker">Live from the Field</div>
       <h2>Schedule &amp; Scores</h2>
-      <p>Every Green Wave game, updated live — scores, results, and season stats pulled straight from CollegeFootballData.</p>
+      <p>Every Green Wave game — scores and results pulled straight from CollegeFootballData.</p>
     </div>
 
     <div class="sched-toolbar">
@@ -541,7 +541,8 @@
       <div class="sched-record" id="schedRecord"></div>
     </div>
 
-    <div class="stat-grid" id="schedStats"></div>
+    <!-- Live top-stats hidden for now (kept in the DOM so it can be re-enabled later) -->
+    <div class="stat-grid" id="schedStats" style="display:none"></div>
 
     <div id="schedList" class="sched-list"></div>
 
@@ -853,25 +854,33 @@ const FEED_LOOKUP = "https://itunes.apple.com/lookup?id="+PODCAST_ITUNES_ID+
 function epLen(ms){ var s=Math.round((ms||0)/1000), h=Math.floor(s/3600), m=Math.round((s%3600)/60); return h?(h+'h '+m+'m'):(m+'m'); }
 function epDate(iso){ var d=new Date(iso); return isNaN(d)?'':d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}); }
 function epCountSet(n){ ['epCount','epCount2'].forEach(function(id){ var el=document.getElementById(id); if(el&&n) el.textContent=n; }); }
+function applyEpisodeFeed(d){
+  var res = (d && d.results) || [];
+  var eps = res
+    .filter(function(r){ return r.wrapperType==='podcastEpisode' || r.kind==='podcast-episode'; })
+    .map(function(r){ return {
+      title: r.trackName || 'Untitled',
+      date:  epDate(r.releaseDate),
+      len:   epLen(r.trackTimeMillis),
+      apple: r.trackViewUrl || SHOWS.apple,   // exact per-episode Apple link
+      spotify:'', soundcloud:''               // other platforms open the show page
+    }; });
+  if(eps.length){ EPISODES = eps; renderEpisodes(); }
+  var show = res[0];
+  if(show && show.trackCount) epCountSet(show.trackCount);
+}
+/* The iTunes lookup API does NOT send CORS headers, so a normal fetch() is blocked
+   by the browser and the page would silently fall back to the built-in list. We use
+   JSONP instead (a <script> tag with a ?callback= handler), which isn't subject to
+   CORS — this is what makes brand-new episodes actually appear on the site. */
 function loadEpisodeFeed(){
-  fetch(FEED_LOOKUP)
-    .then(function(r){ if(!r.ok) throw 0; return r.json(); })
-    .then(function(d){
-      var res = (d && d.results) || [];
-      var eps = res
-        .filter(function(r){ return r.wrapperType==='podcastEpisode' || r.kind==='podcast-episode'; })
-        .map(function(r){ return {
-          title: r.trackName || 'Untitled',
-          date:  epDate(r.releaseDate),
-          len:   epLen(r.trackTimeMillis),
-          apple: r.trackViewUrl || SHOWS.apple,   // exact per-episode Apple link
-          spotify:'', soundcloud:''               // other platforms open the show page
-        }; });
-      if(eps.length){ EPISODES = eps; renderEpisodes(); }
-      var show = res[0];
-      if(show && show.trackCount) epCountSet(show.trackCount);
-    })
-    .catch(function(){ /* network/API failed — keep the built-in list on screen */ });
+  var cb = '__uuEpisodes_' + Date.now();
+  var s  = document.createElement('script');
+  var done = function(){ try{ delete window[cb]; }catch(e){ window[cb]=undefined; } if(s.parentNode) s.parentNode.removeChild(s); };
+  window[cb] = function(d){ try{ applyEpisodeFeed(d); }catch(e){} done(); };
+  s.onerror = function(){ done(); };   // keep the built-in list if the feed can't load
+  s.src = FEED_LOOKUP + '&callback=' + cb;
+  document.body.appendChild(s);
 }
 renderEpisodes();     // instant paint from the built-in list
 loadEpisodeFeed();    // then refresh from the live Apple feed
@@ -1471,10 +1480,31 @@ renderDashTabs();
   // Tolerant of both CFBD response styles (camelCase and snake_case)
   const F = (o,cc,sc) => (o && o[cc]!==undefined ? o[cc] : (o?o[sc]:undefined));
 
-  async function api(path){
-    const res = await fetch(API+path, { headers:{ Authorization:'Bearer '+CFBD_KEY, Accept:'application/json' } });
-    if(!res.ok) throw new Error('HTTP '+res.status);
-    return res.json();
+  /* ---- Cached CFBD fetch ----------------------------------------------------
+     The free CFBD tier is rate-limited, and our stats pull is heavy (it fetches
+     every FBS team's games to compute national/conference ranks). To avoid
+     hammering the key (which returns HTTP 429 once its quota is spent) we cache
+     each response in the browser's localStorage with a per-endpoint TTL, and if
+     a live call fails we fall back to the last good cached copy so the widget
+     keeps showing data instead of breaking. */
+  const MIN = 60*1000, HR = 60*MIN;
+  const TTL = { games:30*MIN, ranks:12*HR, teams:24*HR, leaders:6*HR };
+  function cacheRead(key){ try{ var r=localStorage.getItem(key); return r?JSON.parse(r):null; }catch(e){ return null; } }
+  function cacheFresh(o){ return o && (Date.now()-o.t) <= (o.ttl||TTL.games); }
+  async function api(path, ttl){
+    const key = 'cfbd:'+path;
+    const c = cacheRead(key);
+    if(cacheFresh(c)) return c.v;                 // fresh cache — no network call
+    try{
+      const res = await fetch(API+path, { headers:{ Authorization:'Bearer '+CFBD_KEY, Accept:'application/json' } });
+      if(!res.ok) throw new Error('HTTP '+res.status);
+      const data = await res.json();
+      try{ localStorage.setItem(key, JSON.stringify({ t:Date.now(), ttl:ttl||TTL.games, v:data })); }catch(e){}
+      return data;
+    }catch(e){
+      if(c) return c.v;                            // stale-on-error: better than a broken section
+      throw e;
+    }
   }
 
   function fmtDate(iso){
@@ -1545,8 +1575,8 @@ renderDashTabs();
     if(rankCache[year]!==undefined) return rankCache[year];
     try{
       const [allGames, teams] = await Promise.all([
-        api(`/games?year=${year}&seasonType=regular`),
-        api(`/teams/fbs?year=${year}`)
+        api(`/games?year=${year}&seasonType=regular`, TTL.ranks),   // huge query — cache 12h
+        api(`/teams/fbs?year=${year}`, TTL.teams)                   // rarely changes — cache 24h
       ]);
       const confOf = {}; const fbs = new Set();
       (teams||[]).forEach(t=>{ const s=F(t,'school','school'); fbs.add(s); confOf[s]=F(t,'conference','conference'); });
@@ -1584,7 +1614,7 @@ renderDashTabs();
   // --- Individual season leaders ---
   async function getLeaders(year){
     try{
-      const rows = await api(`/stats/player/season?year=${year}&team=${encodeURIComponent(TEAM)}`);
+      const rows = await api(`/stats/player/season?year=${year}&team=${encodeURIComponent(TEAM)}`, TTL.leaders);
       const best=(cat,type)=>{
         let top=null;
         (rows||[]).forEach(r=>{
@@ -1655,7 +1685,8 @@ renderDashTabs();
       const views = games.map(gameView);
       $('schedList').innerHTML = views.map(v=>v.html).join('');
       renderRecord(views);
-      renderStats(year, games);
+      // Top-stats intentionally disabled for now \u2014 only the (light) schedule call is made,
+      // which keeps us well under the CFBD rate limit. Re-enable by calling renderStats(year, games).
       $('schedNote').innerHTML = `Data from <a href="https://collegefootballdata.com" target="_blank" rel="noopener">CollegeFootballData</a> \u00b7 ${year} regular season \u00b7 refreshes on load.`;
     }catch(e){
       $('schedList').innerHTML = `<div class="sched-msg">Couldn\u2019t load the schedule right now (${esc(e.message)}). Try refreshing the page.</div>`;
