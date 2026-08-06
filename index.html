@@ -1462,7 +1462,7 @@ renderDashTabs();
 <!-- SCHEDULE & SCORES logic (CollegeFootballData API) -->
 <script>
 (function(){
-  const CFBD_KEY = "T0LzDR7gtp/2KjzQ5KCC6ERzAQMttqOQwHWjNQKiWXU6BWPdk+138rbDrRpwwzcy";
+  const CFBD_KEY = "32wTxzo4ZZm8puQqnzeyB+jLSK3GcXM4kIWVFNQrinxxZy7Hl5tBxEtFuVbZbKYy";
   const TEAM = "Tulane";
   const API  = "https://api.collegefootballdata.com";
 
@@ -1507,10 +1507,16 @@ renderDashTabs();
     }
   }
 
-  function fmtDate(iso){
+  function fmtDate(iso, tbd){
     if(!iso) return {dt:'TBD', tm:'TBD'};
     const d = new Date(iso);
     if(isNaN(d.getTime())) return {dt:'TBD', tm:'TBD'};
+    // When a kickoff time isn't set yet, CFBD stores the game at 00:00 UTC as a
+    // placeholder. Converting that to a US timezone rolls the date back a day, so
+    // for TBD games we read the date in UTC to show the true calendar date.
+    if(tbd){
+      return { dt: d.toLocaleDateString('en-US',{month:'short',day:'numeric',timeZone:'UTC'}), tm:'TBD' };
+    }
     return {
       dt: d.toLocaleDateString('en-US',{month:'short',day:'numeric'}),
       tm: d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})
@@ -1539,7 +1545,7 @@ renderDashTabs();
     const gid   = F(g,'id','id');
     const loc = neutral ? 'Neutral site' : (isHome ? 'Home' : 'Away');
     const prefix = (neutral || isHome) ? 'vs' : 'at';
-    const dd = fmtDate(start);
+    const dd = fmtDate(start, tbd);
     const timeDisp = tbd ? 'TBD' : dd.tm;   // only show a kickoff time when CFBD has confirmed it
     let cls='upcoming', resultHTML;
     if(completed && us!=null && them!=null){
