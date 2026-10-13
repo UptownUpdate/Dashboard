@@ -423,6 +423,53 @@
   .btn-yt{display:inline-flex;align-items:center;gap:9px;background:#FF0000;color:#fff;font-weight:800;padding:12px 22px;border-radius:10px;text-decoration:none}
   .btn-yt:hover{background:#d90000;text-decoration:none;color:#fff}
 
+  /* Green Wave Forward — Power Conference Pledge */
+  .pledge-section{background:var(--paper)}
+  .case-grid{display:grid;grid-template-columns:1.4fr 1fr;gap:16px;margin:6px 0 22px}
+  .case-col{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:18px 20px}
+  .case-col h3{font-size:.72rem;text-transform:uppercase;letter-spacing:1px;font-weight:800;margin-bottom:12px}
+  .case-col.has h3{color:var(--olive)}
+  .case-col.missing{background:#fff6f2;border-color:#f0d8cd}
+  .case-col.missing h3{color:#b4262a}
+  .cs{display:flex;gap:12px;align-items:baseline;padding:8px 0;border-top:1px solid var(--line)}
+  .cs:first-of-type{border-top:none}
+  .case-col.missing .cs{border-top-color:#f0d8cd}
+  .cs-n{font-size:1.25rem;font-weight:900;color:var(--olive-dark);min-width:74px;flex-shrink:0;line-height:1.1}
+  .case-col.missing .cs-n{color:#b4262a}
+  .cs-t{font-size:.84rem;color:#33423b;line-height:1.35}
+  .gap-chart{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:18px 20px;margin-bottom:22px}
+  .gap-title{font-size:.72rem;text-transform:uppercase;letter-spacing:1px;font-weight:800;color:var(--olive);margin-bottom:14px}
+  .gap-row{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+  .gap-row:last-child{margin-bottom:0}
+  .gap-lbl{width:120px;flex-shrink:0;font-size:.8rem;font-weight:700;text-align:right;color:var(--ink)}
+  .gap-lbl small{color:var(--muted);font-weight:600}
+  .gap-track{flex:1;display:flex;align-items:stretch;background:#eef2ef;border-radius:6px;height:24px;overflow:hidden}
+  .gap-bar{display:flex;align-items:center;justify-content:flex-end;background:#9aa8a0;border-radius:6px 0 0 6px;min-width:52px}
+  .gap-bar i{color:#fff;font-size:.68rem;font-weight:800;font-style:normal;padding:0 8px;white-space:nowrap}
+  .gap-bar.tu{background:var(--olive)}
+  .gap-ext{display:flex;align-items:center;color:#b4262a;font-size:.62rem;font-weight:800;padding-left:7px;border-left:2px dashed #b4262a;white-space:nowrap}
+  .case-ask{background:var(--ink);color:#fff;border-radius:14px;padding:22px 24px;text-align:center;margin-bottom:26px}
+  .case-ask h3{color:#fff;font-size:1rem;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
+  .case-ask p{color:#e4ece8;max-width:640px;margin:0 auto 4px;font-size:.95rem;line-height:1.5}
+  .case-ask b{color:#fff}
+  .btn-pdf{display:inline-block;background:var(--blue);color:#fff;font-weight:800;padding:11px 22px;border-radius:10px;text-decoration:none;margin-top:14px;font-size:.9rem}
+  .btn-pdf:hover{background:var(--blue-dark);text-decoration:none;color:#fff}
+  .pledge-head{text-align:center;margin-bottom:8px}
+  .pledge-head h3{font-size:1.4rem;font-weight:900;color:var(--olive-dark)}
+  .pledge-head p{max-width:600px;margin:6px auto 0;color:var(--muted);font-size:.92rem}
+  @media(max-width:640px){ .case-grid{grid-template-columns:1fr} .gap-lbl{width:92px} }
+  .pledge-goals{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;margin:4px 0 24px}
+  .pg{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:16px 22px;text-align:center;min-width:150px;flex:0 1 190px}
+  .pg-num{font-size:1.9rem;font-weight:900;color:var(--olive);line-height:1}
+  .pg-lbl{font-size:.78rem;color:var(--muted);font-weight:600;margin-top:6px}
+  .pledge-embed{max-width:760px;margin:0 auto}
+  .pledge-frame{width:100%;height:820px;border:0;border-radius:14px;background:#fff;box-shadow:var(--shadow);display:block}
+  .pledge-fallback{text-align:center;margin-top:12px;font-size:.9rem}
+  .pledge-fallback a{color:var(--blue-dark);font-weight:700}
+  .pledge-note{max-width:680px;margin:20px auto 0;text-align:center;font-size:.76rem;color:var(--muted);line-height:1.5}
+  .menu a.nav-pledge{color:var(--olive);font-weight:800}
+  @media(max-width:600px){ .pledge-frame{height:740px} }
+
   footer{background:var(--olive-dark);color:#bcd8cc;text-align:center;padding:30px 0;font-size:.88rem}
   footer .brand{justify-content:center;margin-bottom:8px}
   footer .social{display:flex;gap:10px;justify-content:center;margin-bottom:10px;flex-wrap:wrap}
@@ -443,6 +490,7 @@
     <a class="brand" href="#top" aria-label="Back to top"><img src="logo.png" alt="The Uptown Update logo" class="brand-logo"> THE UPTOWN UPDATE</a>
     <nav class="menu">
       <a href="#watch" id="navWatch" style="display:none">Watch Live</a>
+      <a href="#pledge" class="nav-pledge">Pledge</a>
       <a href="#episodes">Episodes</a>
       <a href="#schedule">Schedule</a>
       <a href="#dashboard">Recruiting Dashboard</a>
@@ -465,6 +513,68 @@
     </div>
   </div>
 </div>
+
+<!-- GREEN WAVE FORWARD — Power Conference Pledge -->
+<section id="pledge" class="pledge-section">
+  <div class="wrap">
+    <div class="section-head" style="text-align:center">
+      <div class="kicker">Green Wave Forward · Alumni Brief</div>
+      <h2>Tulane has what a power conference wants. Except the money.</h2>
+      <p style="margin-left:auto;margin-right:auto">Audience, winning, and broad-based success — Tulane already checks the boxes the ACC weighs. What it lacks is financial backing, from the university and its alumni, like the donor money that earned SMU its seat.</p>
+    </div>
+
+    <div class="case-grid">
+      <div class="case-col has">
+        <h3>What Tulane already has</h3>
+        <div class="cs"><div class="cs-n">634K</div><div class="cs-t"><b>Viewers per game</b> (2021–25, incl. postseason) — most in the group, ahead of SMU (539K) and USF (398K).</div></div>
+        <div class="cs"><div class="cs-n">Winner</div><div class="cs-t"><b>Proven on the field</b> — Cotton Bowl win over USC, 3 hosted title games, and the 2025 Playoff (6.2M viewers).</div></div>
+        <div class="cs"><div class="cs-n">97th</div><div class="cs-t"><b>Directors' Cup (2025–26)</b> — best in the American; the broad-based success the ACC values.</div></div>
+        <div class="cs"><div class="cs-n">160K</div><div class="cs-t"><b>Living alumni</b> — more than SMU (140K) or Wake Forest (82K).</div></div>
+      </div>
+      <div class="case-col missing">
+        <h3>What it's missing</h3>
+        <div class="cs"><div class="cs-n">$42.8M</div><div class="cs-t"><b>a year</b> — the gap between Tulane ($66.2M) and Syracuse ($109.0M), the ACC's lowest spender. (FY2025 EADA.)</div></div>
+        <div class="cs"><div class="cs-n">$414</div><div class="cs-t"><b>per alum</b> in athletic spending — vs. SMU at $1,073 and Wake Forest at $1,398.</div></div>
+      </div>
+    </div>
+
+    <div class="gap-chart">
+      <div class="gap-title">The funding gap — FY2025 athletic spending</div>
+      <div class="gap-row"><span class="gap-lbl">Tulane</span><span class="gap-track"><span class="gap-bar tu" style="width:40%"><i>$66.2M</i></span><span class="gap-ext" style="width:26%">+$42.8M gap</span></span></div>
+      <div class="gap-row"><span class="gap-lbl">Syracuse <small>(floor)</small></span><span class="gap-track"><span class="gap-bar" style="width:66%"><i>$109.0M</i></span></span></div>
+      <div class="gap-row"><span class="gap-lbl">Wake Forest</span><span class="gap-track"><span class="gap-bar" style="width:69%"><i>$114.6M</i></span></span></div>
+      <div class="gap-row"><span class="gap-lbl">USF</span><span class="gap-track"><span class="gap-bar" style="width:74%"><i>$122.1M</i></span></span></div>
+      <div class="gap-row"><span class="gap-lbl">SMU</span><span class="gap-track"><span class="gap-bar" style="width:91%"><i>$150.2M</i></span></span></div>
+      <div class="gap-row"><span class="gap-lbl">ACC average</span><span class="gap-track"><span class="gap-bar" style="width:100%"><i>$165.1M</i></span></span></div>
+    </div>
+
+    <div class="case-ask">
+      <h3>The ask</h3>
+      <p>Tulane has built the program. Now fund it: <b>8–12 major donors</b> committing about <b>$43M a year for nine years</b>, a university that matches that ambition, and alumni in the seats.</p>
+      <a class="btn-pdf" href="tulane-acc-case.pdf" target="_blank" rel="noopener">Read the full 3-page alumni brief (PDF) →</a>
+    </div>
+
+    <div class="pledge-head">
+      <h3>Sign the Power Conference Pledge</h3>
+      <p>If Tulane publicly commits to a power-conference seat and funds a plan to get there, pledge to increase your annual support of Tulane Athletics. It's a non-binding pledge of intent — no money is collected here.</p>
+    </div>
+
+    <div class="pledge-goals">
+      <div class="pg"><div class="pg-num">1,500</div><div class="pg-lbl">pledges by Nov. 30</div></div>
+      <div class="pg"><div class="pg-num">$10M</div><div class="pg-lbl">annual giving intent goal</div></div>
+      <div class="pg"><div class="pg-num">$43M</div><div class="pg-lbl">a year — the Power Conference gap</div></div>
+    </div>
+
+    <div class="pledge-embed">
+      <iframe class="pledge-frame"
+        src="https://docs.google.com/forms/d/e/1FAIpQLSfE4jPUgsNHv_HMA8bPlrVaiqsU3fCrEEvpReF0DIg92lOAYQ/viewform?embedded=true"
+        title="The Power Conference Pledge" loading="lazy">Loading the pledge form…</iframe>
+      <p class="pledge-fallback"><a href="https://docs.google.com/forms/d/e/1FAIpQLSfE4jPUgsNHv_HMA8bPlrVaiqsU3fCrEEvpReF0DIg92lOAYQ/viewform" target="_blank" rel="noopener">Open the pledge in a new tab →</a></p>
+    </div>
+
+    <p class="pledge-note">Green Wave Forward is an independent group of Tulane alumni and fans — not affiliated with or collecting on behalf of Tulane University. Your information is used only to count and organize pledges, and shared with Tulane Advancement only if you opt in.</p>
+  </div>
+</section>
 
 <!-- WATCH LIVE (hidden until a stream link is set in LIVE_STREAM) -->
 <section id="watch" class="watch-section" style="display:none">
@@ -580,6 +690,7 @@
     <p class="dash-note" id="schedNote"></p>
   </div>
 </section>
+
 
 <!-- NEWS & LINKS -->
 <section id="news">
